@@ -20,6 +20,7 @@ build environment it can explore and modify freely without affecting the host.
 - `host-tools/connect.sh` — exec into a running dev container.
 - `host-tools/fresh-container.sh` — tear down and rebuild the dev container, then connect.
 - `host-tools/status.sh` — report container state, persistent volumes, build artifacts, bind mounts, and environment config. Highlights state that survives container rebuilds.
+- `host-tools/nuke.sh` — completely wipe all container state: removes the container, deletes all named volumes (nss, nspr, ccache), and clears the `bugs/` directory. Warns about uncommitted changes and requires typing "nuke" to confirm.
 
 ## Workflow
 
