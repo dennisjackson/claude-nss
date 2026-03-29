@@ -66,7 +66,7 @@ cat > ~/.claude.json << PREFS
 PREFS
 
 echo "==> Linking CLAUDE.md into workspace..."
-ln -sf /workspaces/config/CLAUDE.md "${WORKSPACE}/CLAUDE.md"
+ln -sf .claude/CLAUDE.md "${WORKSPACE}/CLAUDE.md"
 
 echo "==> Fixing volume ownership..."
 sudo chown vscode:vscode "${WORKSPACE}/nspr" "${WORKSPACE}/nss"

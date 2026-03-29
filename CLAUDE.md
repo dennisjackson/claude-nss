@@ -1,72 +1,32 @@
-# NSS Development Environment
+# NSS Dev Container — Host Project
 
-## Project
-This is a dev container for working on Mozilla NSS (Network Security Services) and NSPR (Netscape Portable Runtime).
+This repo defines a reproducible, sandboxed dev container for working on
+Mozilla NSS/NSPR with Claude Code. The container gives Claude a full C/C++
+build environment it can explore and modify freely without affecting the host.
 
 ## Directory Layout
-- `/workspaces/nss-dev/nss/` — NSS source (git-cinnabar clone from hg.mozilla.org)
-- `/workspaces/nss-dev/nspr/` — NSPR source (git-cinnabar clone from hg.mozilla.org)
-- `/workspaces/config/` — Dev container configuration (do not modify from inside the container)
 
-## Building NSS
-```sh
-cd /workspaces/nss-dev/nss
-./build.sh
-```
-NSS uses gyp + ninja (not CMake). The `build.sh` script handles everything including building NSPR.
+| Directory | Purpose | In container? |
+|---|---|---|
+| `.devcontainer/` | Dockerfile, devcontainer.json, post-create script | ro at `/workspaces/config/` |
+| `container-claude/` | CLAUDE.md and `.claude/` skills/commands for use inside the container | rw at `/workspaces/nss-dev/.claude/` |
+| `bugs/` | Bug context fetched from Bugzilla (not tracked in git) | rw at `/workspaces/nss-dev/bugs/` |
+| `host-tools/` | Scripts that run on the host only (bz-fetch, envrc setup) | **no** |
 
-### Useful build flags
-- `./build.sh -c` — clean build
-- `./build.sh -g -v` — debug build, verbose
-- `./build.sh --fuzz` — build with fuzzing support (libFuzzer)
-- `./build.sh --asan` — build with AddressSanitizer
-- `./build.sh --ubsan` — build with UndefinedBehaviorSanitizer
+## Host Tools
 
-Build output goes to `../dist/`.
+- `host-tools/bz-fetch.py <bug-id>` — fetch a Bugzilla bug (with comments, attachments, Phabricator diffs) into `bugs/bug-<id>/` as markdown for Claude to read inside the container.
+- `host-tools/setup-envrc.sh` — interactively populate `.envrc` with API keys (`ANTHROPIC_API_KEY`, `BUGZILLA_API_KEY`, `PHABRICATOR_API_TOKEN`).
 
-## Source Control
-Repos are cloned via git-cinnabar. Use standard git commands — cinnabar translates to/from Mercurial transparently.
+## Workflow
 
-## Available Tools
-- **clang/clang++** — default compiler
-- **gcc/g++** — alternative compiler
-- **gdb** — debugger
-- **valgrind** — memory analysis
-- **weggli** — semantic C/C++ code search (e.g. `weggli -R 'memcpy($buf, $src, $len)' nss/`)
-- **clang-tidy, clang-format, cppcheck** — static analysis and formatting
-- **bear** — generate `compile_commands.json` for IDE integration: `bear -- ./build.sh`
-- **lcov** — code coverage
+1. Run `host-tools/setup-envrc.sh` once to configure API keys.
+2. Fetch bug context: `host-tools/bz-fetch.py 1234567`
+3. Open the dev container. Claude Code is pre-installed and pre-configured inside.
+4. Claude sees `CLAUDE.md` (via symlink), the `.claude/` commands directory, bug data in `bugs/`, and the full NSS/NSPR source — everything it needs to investigate and work on a bug.
 
-## Running Tests
+## Design Principles
 
-### Running all tests
-```sh
-cd /workspaces/nss-dev/nss/tests
-HOST=localhost DOMSUF=localdomain bash all.sh
-```
-
-### Running ssl gtests
-Do **not** invoke `ssl_gtest` directly — it requires a cert DB populated by the test harness. Use:
-```sh
-cd /workspaces/nss-dev/nss/tests
-HOST=localhost DOMSUF=localdomain USE_64=1 DIST=/workspaces/nss-dev/dist bash ssl_gtests/ssl_gtests.sh
-```
-The script creates the DB, generates all test certificates, then runs the binary. Running `ssl_gtest` directly (even against a manually created DB) will fail with certificate loading errors and likely crash.
-
-### Running a specific gtest suite by name
-Set `GTESTFILTER` to a gtest filter expression:
-```sh
-HOST=localhost DOMSUF=localdomain USE_64=1 DIST=/workspaces/nss-dev/dist GTESTFILTER="TlsConnectTest.*" bash ssl_gtests/ssl_gtests.sh
-```
-
-### Other individual test scripts
-Each test has its own script under `nss/tests/` (e.g. `ssl/ssl.sh`, `cert/cert.sh`). They all require `HOST` and `DOMSUF` to be set.
-
-## NSS Code Conventions
-- C11 / C++17
-- NSS uses `PK11_*`, `SEC_*`, `CERT_*`, `NSS_*` prefixes for public APIs
-- NSPR uses `PR_*` prefix
-- Test binaries are in `nss/tests/` and run via `nss/tests/all.sh`
-
-## Keeping This File Up to Date
-When something surprising or non-obvious is discovered about how to build, test, or work in this environment, update this file. The goal is that future sessions should not have to rediscover the same things.
+- **Reproducible** — the container is defined entirely by `.devcontainer/`; volumes persist NSS/NSPR source across rebuilds.
+- **Sandboxed** — Claude operates in the container with full permissions but no access to the host filesystem beyond what is explicitly mounted.
+- **Host/container separation** — tooling that talks to external APIs (Bugzilla, Phabricator) runs on the host; the container is purely a build/analysis environment.
