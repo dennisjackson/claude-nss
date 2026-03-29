@@ -30,7 +30,6 @@
     "source=nss-dev-nss,target=/workspaces/nss-dev/nss,type=volume",
     "source=${localWorkspaceFolder}/.git,target=/workspaces/config/.git,type=bind,readonly",
     "source=${localWorkspaceFolder}/.devcontainer,target=/workspaces/config/.devcontainer,type=bind,readonly",
-    "source=${localWorkspaceFolder}/.envrc,target=/workspaces/config/.envrc,type=bind,readonly",
     "source=${localWorkspaceFolder}/container-claude,target=/workspaces/nss-dev/.claude,type=bind",
     "source=${localWorkspaceFolder}/bugs,target=/workspaces/nss-dev/bugs,type=bind"
   ],
