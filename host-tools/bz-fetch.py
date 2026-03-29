@@ -151,12 +151,16 @@ def fetch_phabricator_diff(revision: str) -> str | None:
     rev_id = int(revision[1:])  # strip leading 'D'
 
     # Fast path: public download endpoint (no auth needed)
+    # Phabricator returns 200 with an HTML login page for non-public revisions,
+    # so we must check the Content-Type to distinguish a real diff from a redirect.
     url = f"{PHAB_BASE}/{revision}?download=true"
     req = urllib.request.Request(url, headers={"Accept": "text/plain"})
     try:
         with urllib.request.urlopen(req) as resp:
-            if resp.status == 200:
+            ctype = resp.headers.get("Content-Type", "")
+            if resp.status == 200 and "text/plain" in ctype:
                 return resp.read().decode("utf-8", errors="replace")
+            # HTML response (login page) — fall through to Conduit path
     except urllib.error.HTTPError as e:
         if e.code not in (401, 403):
             print(f"  Warning: unexpected HTTP {e.code} fetching {revision}", file=sys.stderr)
@@ -177,8 +181,20 @@ def fetch_phabricator_diff(revision: str) -> str | None:
         return None
 
     try:
+        # Resolve revision ID → PHID
+        rev_result = phab_conduit("differential.revision.search", {
+            "constraints[ids][0]": rev_id,
+            "limit": "1",
+        })
+        revisions = rev_result.get("data", [])
+        if not revisions:
+            print(f"  Warning: revision {revision} not found", file=sys.stderr)
+            return None
+        rev_phid = revisions[0]["phid"]
+
+        # Get the latest diff for this revision
         result = phab_conduit("differential.diff.search", {
-            "constraints[revisionIDs][0]": rev_id,
+            "constraints[revisionPHIDs][0]": rev_phid,
             "order": "newest",
             "limit": "1",
         })
