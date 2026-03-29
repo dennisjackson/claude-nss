@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Fetch a Mozilla Bugzilla bug (with comments and attachments) and write it
-to a directory of markdown files suitable for feeding into an LLM.
+Fetch Mozilla Bugzilla bugs (with comments and attachments) and write them
+to directories of markdown files suitable for feeding into an LLM.
 
 Usage:
-    bz-fetch.py <bug-number> [output-dir]
+    bz-fetch.py <bug-number> [bug-number ...] [-o output-dir]
 
 Environment:
     BUGZILLA_API_KEY      — Bugzilla API key (optional but recommended to avoid rate limits)
@@ -319,14 +319,40 @@ def main():
         print(__doc__)
         sys.exit(1)
 
-    try:
-        bug_id = int(sys.argv[1])
-    except ValueError:
-        sys.exit(f"Error: '{sys.argv[1]}' is not a valid bug number")
-
+    args = sys.argv[1:]
     default_out = Path(__file__).resolve().parent.parent / "bugs"
-    out_root = Path(sys.argv[2]) if len(sys.argv) > 2 else default_out
-    fetch_bug(bug_id, out_root)
+    out_root = default_out
+
+    if "-o" in args:
+        idx = args.index("-o")
+        if idx + 1 >= len(args):
+            sys.exit("Error: -o requires a directory argument")
+        out_root = Path(args[idx + 1])
+        args = args[:idx] + args[idx + 2:]
+
+    bug_ids = []
+    for arg in args:
+        try:
+            bug_ids.append(int(arg))
+        except ValueError:
+            sys.exit(f"Error: '{arg}' is not a valid bug number")
+
+    if not bug_ids:
+        print(__doc__)
+        sys.exit(1)
+
+    failed = []
+    for bug_id in bug_ids:
+        try:
+            fetch_bug(bug_id, out_root)
+        except Exception as e:
+            print(f"Error fetching bug {bug_id}: {e}", file=sys.stderr)
+            failed.append(bug_id)
+        if bug_id != bug_ids[-1]:
+            print()
+
+    if failed:
+        sys.exit(f"Failed to fetch: {', '.join(str(b) for b in failed)}")
 
 
 if __name__ == "__main__":
