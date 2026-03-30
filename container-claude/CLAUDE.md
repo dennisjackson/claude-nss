@@ -97,7 +97,7 @@ Keep it concise — the reviewer can read the diff.
 - First line: `Bug NNNNNN - Description` (capital B, space after dash)
 - Keep the first line under ~72 characters
 - Separate fix and test into two commits (fix first, test second)
-- Include `Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>` at the end
+- Do NOT include any Co-Authored-By trailer
 
 ### Analysis and comments → write to `bugs/`
 

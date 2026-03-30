@@ -54,6 +54,23 @@ cat > ~/.claude.json << PREFS
 }
 PREFS
 
+echo "==> Configuring git identity from host..."
+IDENTITY_FILE="${WORKSPACE}/bugs/.host-git-identity"
+if [ -f "${IDENTITY_FILE}" ]; then
+    GIT_NAME="$(sed -n '1p' "${IDENTITY_FILE}")"
+    GIT_EMAIL="$(sed -n '2p' "${IDENTITY_FILE}")"
+    if [ -n "${GIT_NAME}" ]; then
+        git config --global user.name "${GIT_NAME}"
+        echo "    user.name = ${GIT_NAME}"
+    fi
+    if [ -n "${GIT_EMAIL}" ]; then
+        git config --global user.email "${GIT_EMAIL}"
+        echo "    user.email = ${GIT_EMAIL}"
+    fi
+else
+    echo "    WARNING: ${IDENTITY_FILE} not found — git identity not configured"
+fi
+
 echo "==> Linking CLAUDE.md into workspace..."
 ln -sf .claude/CLAUDE.md "${WORKSPACE}/CLAUDE.md"
 
