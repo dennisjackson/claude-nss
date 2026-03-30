@@ -17,20 +17,20 @@ build environment it can explore and modify freely without affecting the host.
 
 ## Host Tools
 
-- `host-tools/bz-fetch.py <bug-id> [...]` — fetch Bugzilla bugs (with comments, attachments, Phabricator diffs) into `bugs/bug-<id>/` as markdown for Claude to read inside the container.
-- `host-tools/setup-envrc.sh` — interactively populate `.envrc` with API keys (`ANTHROPIC_API_KEY`, `BUGZILLA_API_KEY`, `PHABRICATOR_API_TOKEN`).
-- `host-tools/connect.sh` — connect to the dev container. Starts it if stopped, builds it if missing.
+- `host-tools/bz-fetch.py <bug-id> [...]` — fetch Bugzilla bugs (with comments, attachments, Phabricator diffs) into `bugs/bug-<id>/` as markdown for Claude to read inside the container. Auto-runs envrc setup if `.envrc` is missing.
+- `host-tools/connect.sh` — connect to the dev container. Starts it if stopped, builds it if missing. Auto-runs envrc setup if `.envrc` is missing.
 - `host-tools/sync-host-nss.sh` — fetch exchange branches into `host-nss/` and list what's available for review. Clones NSS automatically on first run.
-- `host-tools/status.sh` — report container state, persistent volumes, build artifacts, bind mounts, and environment config. Highlights state that survives container rebuilds.
 - `host-tools/nuke.sh` — destroy container, volumes, and exchange repo (requires typing "nuke"). Warns about uncommitted changes and unmerged branches in `host-nss/`. Prompts separately for wiping `bugs/` and `host-nss/`.
 - `host-tools/internal/fresh-container.sh` — tear down and rebuild the dev container (called by `connect.sh`).
 - `host-tools/internal/setup-host-nss.sh` — clone NSS into `host-nss/` via git-cinnabar and add the exchange remote (called by `sync-host-nss.sh`).
+- `host-tools/internal/setup-envrc.sh` — interactively populate `.envrc` with API keys (`ANTHROPIC_API_KEY`, `BUGZILLA_API_KEY`, `PHABRICATOR_API_TOKEN`). Triggered automatically by `connect.sh` and `bz-fetch.py` when `.envrc` is missing.
+- `host-tools/internal/status.sh` — report container state, persistent volumes, build artifacts, bind mounts, and environment config.
 
 ## Workflow
 
-1. Run `host-tools/setup-envrc.sh` once to configure API keys.
-2. Fetch bug context: `host-tools/bz-fetch.py 1234567`
-3. Open the dev container. Claude Code is pre-installed and pre-configured inside.
+1. Fetch bug context: `host-tools/bz-fetch.py 1234567` (auto-prompts for API keys on first run).
+2. Open the dev container: `host-tools/connect.sh` (also auto-prompts if `.envrc` is missing).
+3. Claude Code is pre-installed and pre-configured inside.
 4. Claude sees `CLAUDE.md` (via symlink), the `.claude/` commands directory, bug data in `bugs/`, and the full NSS/NSPR source — everything it needs to investigate and work on a bug.
 
 ## Extracting Code from the Container

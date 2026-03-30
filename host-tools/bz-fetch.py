@@ -314,10 +314,34 @@ def fetch_bug(bug_id: int, out_root: Path) -> None:
     print(f"  bug.md, comments.md" + (", attachments/" if attachments else ""))
 
 
+def ensure_envrc():
+    """If BUGZILLA_API_KEY is not set, offer to run setup-envrc.sh."""
+    if os.environ.get("BUGZILLA_API_KEY"):
+        return
+    envrc = Path(__file__).resolve().parent.parent / ".envrc"
+    if envrc.exists():
+        return  # .envrc exists but key not loaded — user needs to source it
+    setup = Path(__file__).resolve().parent / "internal" / "setup-envrc.sh"
+    print("No .envrc found — running setup...", file=sys.stderr)
+    import subprocess
+    subprocess.run([str(setup)], check=False)
+    # Source the newly created .envrc into our environment
+    if envrc.exists():
+        with open(envrc) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("export ") and "=" in line:
+                    kv = line[len("export "):]
+                    key, _, val = kv.partition("=")
+                    os.environ[key] = val.strip('"').strip("'")
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         sys.exit(1)
+
+    ensure_envrc()
 
     args = sys.argv[1:]
     default_out = Path(__file__).resolve().parent.parent / "bugs"

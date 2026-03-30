@@ -5,6 +5,12 @@ set -euo pipefail
 PROJ_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 WS_FLAG="--workspace-folder $PROJ_DIR"
 
+# Ensure .envrc exists (needed for API keys passed into the container)
+if [ ! -f "$PROJ_DIR/.envrc" ]; then
+    echo "==> No .envrc found — running setup..."
+    "$PROJ_DIR/host-tools/internal/setup-envrc.sh"
+fi
+
 # Check for a running container
 RUNNING=$(docker ps -q --filter "label=devcontainer.local_folder=$PROJ_DIR" 2>/dev/null || true)
 if [ -n "$RUNNING" ]; then
