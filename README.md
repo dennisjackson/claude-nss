@@ -1,8 +1,8 @@
 # NSS Dev Container
 
 > **Warning** --- Claude Code is, at best, an enthusiastic intern. Treat
-> everything it generates as a starting point that requires review by someone
-> who understands the code.
+> everything it generates as a starting point that requires extensive review
+> by someone who understands the code.
 
 A sandboxed dev container for working on
 [Mozilla NSS/NSPR](https://firefox-source-docs.mozilla.org/security/nss/index.html)
