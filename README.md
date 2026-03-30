@@ -88,6 +88,7 @@ Includes everything you need to build NSS, Claude and various related tools (gdb
   nspr/             NSPR source (Docker volume)
   .ccache/          Compiler cache (Docker volume)
   bugs/             Bind-mounted from host
+  reference/        Read-only reference repos (bind-mounted)
   .claude/          Bind-mounted from container-claude/
   CLAUDE.md         Symlink to .claude/CLAUDE.md
 ```

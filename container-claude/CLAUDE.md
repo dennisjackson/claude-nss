@@ -27,6 +27,7 @@ This is a dev container for working on Mozilla NSS (Network Security Services) a
 - `/workspaces/nss-dev/nspr/` — NSPR source (git-cinnabar clone from hg.mozilla.org)
 - `/workspaces/nss-dev/bugs/` — Bug context fetched from Bugzilla (markdown summaries, attachments, patches). Each bug lives in `bugs/bug-<id>/` with patches in `attachments/`.
 - `/workspaces/nss-dev/.nss-exchange.git/` — Bare git repo shared with the host (the `exchange` remote). Push finished branches here.
+- `/workspaces/nss-dev/reference/` — Read-only reference repos (other TLS libraries, specs). Has its own `CLAUDE.md` with details.
 - `/workspaces/nss-dev/dist/` — Default build output directory
 - `/workspaces/config/` — Dev container configuration (do not modify from inside the container)
 

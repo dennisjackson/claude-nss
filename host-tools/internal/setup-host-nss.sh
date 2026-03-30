@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 HOST_NSS="${REPO_ROOT}/host-nss"
 EXCHANGE="${REPO_ROOT}/.nss-exchange.git"
 

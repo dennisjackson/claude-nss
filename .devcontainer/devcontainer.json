@@ -38,7 +38,8 @@
     "source=${localWorkspaceFolder}/.devcontainer,target=/workspaces/config/.devcontainer,type=bind,readonly",
     "source=${localWorkspaceFolder}/container-claude,target=/workspaces/nss-dev/.claude,type=bind",
     "source=${localWorkspaceFolder}/bugs,target=/workspaces/nss-dev/bugs,type=bind",
-    "source=${localWorkspaceFolder}/.nss-exchange.git,target=/workspaces/nss-dev/.nss-exchange.git,type=bind"
+    "source=${localWorkspaceFolder}/.nss-exchange.git,target=/workspaces/nss-dev/.nss-exchange.git,type=bind",
+    "source=${localWorkspaceFolder}/reference,target=/workspaces/nss-dev/reference,type=bind,readonly"
   ],
   "containerEnv": {
     "CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS": "true",
