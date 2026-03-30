@@ -335,8 +335,6 @@ git commit -m "$(cat <<'EOF'
 Bug BUGNUM - <short description of fix> r=#nss-reviewers
 
 <1-2 sentence explanation of what was wrong and what this patch does>
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```
@@ -351,8 +349,6 @@ git commit -m "$(cat <<'EOF'
 Bug BUGNUM - Add test for <short description> r=#nss-reviewers
 
 <1 sentence describing what the test verifies>
-
-Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
 EOF
 )"
 ```

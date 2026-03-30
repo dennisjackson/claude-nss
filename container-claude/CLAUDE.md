@@ -97,7 +97,7 @@ Keep it concise — the reviewer can read the diff.
 - First line: `Bug NNNNNN - Description r=#nss-reviewers` (capital B, space after dash, reviewer string at end)
 - Keep the first line under ~72 characters
 - Separate fix and test into two commits (fix first, test second)
-- Do NOT include any Co-Authored-By trailer
+- Do NOT include any Co-Authored-By or attribution trailer
 
 ### Analysis and comments → write to `bugs/`
 
