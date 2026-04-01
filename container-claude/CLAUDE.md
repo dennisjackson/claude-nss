@@ -91,7 +91,8 @@ git push exchange <branch-name>
 ```
 Bug 1234567 - Short imperative description of the change r=#nss-reviewers
 
-Optional longer explanation of what was wrong and what this patch does.
+Generally prefer no detailed commit message. The exception is if a patch 
+is introducing substantial amounts of changes.
 Keep it concise — the reviewer can read the diff.
 ```
 
@@ -143,22 +144,27 @@ cd /workspaces/nss-dev/nss/tests
 HOST=localhost DOMSUF=localdomain bash all.sh
 ```
 
-### Running ssl gtests
-Do **not** invoke `ssl_gtest` directly — it requires a cert DB populated by the test harness. Use:
+### Running gtests
+Do **not** invoke gtest binaries (`ssl_gtest`, `certdb_gtest`, etc.) directly — they require a cert DB populated by the test harness. Use the wrapper scripts:
 ```sh
 cd /workspaces/nss-dev/nss/tests
 HOST=localhost DOMSUF=localdomain USE_64=1 DIST=/workspaces/nss-dev/dist bash ssl_gtests/ssl_gtests.sh
 ```
-The script creates the DB, generates all test certificates, then runs the binary. Running `ssl_gtest` directly (even against a manually created DB) will fail with certificate loading errors and likely crash.
+The script creates the DB, generates all test certificates, then runs the binary. Running gtest binaries directly will fail with certificate loading errors and likely crash.
 
 ### Running a specific gtest suite by name
-Set `GTESTFILTER` to a gtest filter expression:
+Set `GTESTFILTER` to a gtest filter expression. This works for all gtest suites, not just ssl_gtests:
 ```sh
 HOST=localhost DOMSUF=localdomain USE_64=1 DIST=/workspaces/nss-dev/dist GTESTFILTER="TlsConnectTest.*" bash ssl_gtests/ssl_gtests.sh
 ```
 
-### Other individual test scripts
-Each test has its own script under `nss/tests/` (e.g. `ssl/ssl.sh`, `cert/cert.sh`). They all require `HOST` and `DOMSUF` to be set.
+### Running shell-based test suites selectively
+Shell-based test suites (`smime/smime.sh`, `cert/cert.sh`, etc.) cannot be run directly — they must be run through `all.sh`. Use `NSS_TESTS` to select which suites to run:
+```sh
+cd /workspaces/nss-dev/nss/tests
+NSS_TESTS=smime HOST=localhost DOMSUF=localdomain USE_64=1 DIST=/workspaces/nss-dev/dist bash all.sh
+```
+Multiple suites can be listed: `NSS_TESTS="cert smime"`. The `all.sh` script handles initialization, cert generation, and cleanup that individual scripts depend on.
 
 ### Code coverage
 Use `./mach test-coverage` for line coverage — do **not** pass coverage flags directly to `build.sh` (it does not work).
@@ -207,6 +213,11 @@ reasons to comment:
 
 If the code is clear, no comment is needed. Commit messages are the right place
 for bug context, not inline comments.
+
+**Test comments** should describe what the test does at a high level not explain the low-level details of the bug it guards against
+(e.g., don't describe the specific memory aliasing pattern, arena internals, or
+past vulnerability mechanics).
+context. Keep test code focused on the what, not the why-it-once-broke.
 
 ## Keeping This File Up to Date
 When something surprising or non-obvious is discovered about how to build, test, or work in this environment, update this file. The goal is that future sessions should not have to rediscover the same things.
