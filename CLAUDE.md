@@ -10,14 +10,14 @@ build environment it can explore and modify freely without affecting the host.
 |---|---|---|
 | `.devcontainer/` | Dockerfile, devcontainer.json, post-create script | ro at `/workspaces/config/` |
 | `container-claude/` | CLAUDE.md and `.claude/` skills/commands for use inside the container | rw at `/workspaces/nss-dev/.claude/` |
-| `bugs/` | Bug context fetched from Bugzilla (not tracked in git) | rw at `/workspaces/nss-dev/bugs/` |
+| `bugs/` | Bug data and reports (not tracked in git). Each bug has `input/` (fetched from Bugzilla) and `reports/` (tool output) subfolders. | rw at `/workspaces/nss-dev/bugs/` |
 | `.nss-exchange.git/` | Bare git repo for extracting code from the container | rw at `/workspaces/nss-dev/.nss-exchange.git` |
 | `host-nss/` | Host-side NSS checkout with exchange remote for reviewing container output | **no** |
 | `host-tools/` | Scripts that run on the host only (bz-fetch, envrc setup) | **no** |
 
 ## Host Tools
 
-- `host-tools/bz-fetch.py <bug-id> [...]` — fetch Bugzilla bugs (with comments, attachments, Phabricator diffs) into `bugs/bug-<id>/` as markdown for Claude to read inside the container. Auto-runs envrc setup if `.envrc` is missing.
+- `host-tools/bz-fetch.py <bug-id> [...]` — fetch Bugzilla bugs (with comments, attachments, Phabricator diffs) into `bugs/<id>-<slug>/` (e.g., `bugs/1234567-heap-buffer-overread-in-tls/`) as markdown for Claude to read inside the container. Auto-runs envrc setup if `.envrc` is missing.
 - `host-tools/connect.sh` — connect to the dev container. Starts it if stopped, builds it if missing. Auto-runs envrc setup if `.envrc` is missing. Syncs reference repos on every connect.
 - `host-tools/sync-host-nss.sh` — fetch exchange branches into `host-nss/` and list what's available for review. Clones NSS automatically on first run.
 - `host-tools/nuke.sh` — destroy container, volumes, and exchange repo (requires typing "nuke"). Warns about uncommitted changes and unmerged branches in `host-nss/`. Prompts separately for wiping `bugs/` and `host-nss/`.

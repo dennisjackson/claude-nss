@@ -131,11 +131,12 @@ fi
 section "Bug data"
 
 if [ -d "$bugs_dir" ]; then
-    bug_count=$(find "$bugs_dir" -maxdepth 1 -type d -name 'bug-*' 2>/dev/null | wc -l)
+    # Match both new-style (1234567-slug/) and legacy (bug-1234567/) folders
+    bug_count=$(find "$bugs_dir" -maxdepth 1 -type d \( -regex '.*/[0-9].*' -o -name 'bug-*' \) 2>/dev/null | wc -l)
     if [ "$bug_count" -gt 0 ]; then
         bugs_size=$(du -sh "$bugs_dir" 2>/dev/null | cut -f1 || echo "?")
         printf '  %s bug(s), %s total:\n' "$bug_count" "$bugs_size"
-        find "$bugs_dir" -maxdepth 1 -type d -name 'bug-*' -printf '%f\n' 2>/dev/null | sort | while IFS= read -r bug; do
+        find "$bugs_dir" -maxdepth 1 -type d \( -regex '.*/[0-9].*' -o -name 'bug-*' \) -printf '%f\n' 2>/dev/null | sort | while IFS= read -r bug; do
             printf '    %s\n' "$bug"
         done
         echo ""

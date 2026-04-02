@@ -30,12 +30,16 @@ Set `BUGNUM` to the primary bug number (first one given, or only one). If `$ARGU
 
 ### 0b. Read all bug context
 
-Locate the bug folder. Check both `/workspaces/nss-dev/bugs/$BUGNUM/` and `/workspaces/nss-dev/bugs/bug-$BUGNUM/` — use whichever exists. If neither exists, **stop and ask the user** to fetch the bug data first. Do not proceed without bug context.
+Locate the bug folder by globbing for the bug number:
+```sh
+BUG_DIR=$(ls -d /workspaces/nss-dev/bugs/*${BUGNUM}*/ 2>/dev/null | head -1)
+```
+This matches both new-style folders (`1234567-heap-buffer-overread/`) and legacy ones (`bug-1234567/`). If no match is found, **stop and ask the user** to fetch the bug data first. Do not proceed without bug context.
 
-Once located, set `BUG_DIR` to the path and read everything available:
-- `index.md` or any markdown summary — read in full
-- All files in `attachments/` — read patches, test cases, crash logs, stack traces
-- Any existing reports (`bugfix-report.md`, `bigger-picture.md`, `review.md`) — these contain prior analysis that saves re-deriving the defect class and code paths
+Once located, read everything available. Fetched content lives in `$BUG_DIR/input/`; reports go to `$BUG_DIR/reports/`:
+- `input/bug.md`, `input/comments.md` — read in full
+- All files in `input/attachments/` — read patches, test cases, crash logs, stack traces
+- Any existing reports in `reports/` (`bugfix-report.md`, `bigger-picture.md`, `review.md`) — these contain prior analysis that saves re-deriving the defect class and code paths
 - If multiple bugs were given, read all of them
 
 ### 0c. Summarize the reported problem
@@ -293,12 +297,13 @@ date -u +%s
 ```
 Calculate elapsed wall-clock time from the start time recorded before Phase 0.
 
-Create the directory if needed. Use `$BUG_DIR` resolved in Phase 0b:
+Create the reports directory if needed. Use `$BUG_DIR` resolved in Phase 0b:
 ```sh
-mkdir -p "$BUG_DIR"
+REPORTS_DIR=$BUG_DIR/reports
+mkdir -p "$REPORTS_DIR"
 ```
 
-Write the report to `$BUG_DIR/triage-report.md`:
+Write the report to `$REPORTS_DIR/triage-report.md`:
 
 ```
 # NSS Bug <BUGNUM> — Triage Report

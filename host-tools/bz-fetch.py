@@ -27,6 +27,35 @@ BASE_URL = "https://bugzilla.mozilla.org/rest"
 PHAB_BASE = "https://phabricator.services.mozilla.com"
 PHAB_RE = re.compile(r"https://phabricator\.services\.mozilla\.com/(D\d+)")
 
+SLUG_MAX_LEN = 50
+
+
+def slugify(text: str) -> str:
+    """Turn a bug summary into a filesystem-safe slug.
+
+    Example: "Heap buffer overread in TLS ClientHello extension parsing"
+             → "heap-buffer-overread-in-tls-clienthello-extension"
+    """
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9]+", "-", text)
+    text = text.strip("-")
+    # Truncate to SLUG_MAX_LEN, but don't cut in the middle of a word
+    if len(text) > SLUG_MAX_LEN:
+        text = text[:SLUG_MAX_LEN].rsplit("-", 1)[0]
+    return text
+
+
+def find_existing_bug_dir(out_root: Path, bug_id: int) -> Path | None:
+    """Find an existing bug folder for this bug ID (any slug variant)."""
+    for entry in out_root.iterdir():
+        if entry.is_dir() and entry.name.startswith(f"{bug_id}-"):
+            return entry
+    # Also check legacy naming
+    legacy = out_root / f"bug-{bug_id}"
+    if legacy.is_dir():
+        return legacy
+    return None
+
 
 def api_get(path: str, params: dict = None) -> dict:
     api_key = os.environ.get("BUGZILLA_API_KEY")
@@ -302,15 +331,23 @@ def fetch_bug(bug_id: int, out_root: Path) -> None:
     attachments = att_data.get("bugs", {}).get(str(bug_id), [])
     print(f"  {len(attachments)} attachment(s)")
 
-    out_dir = out_root / f"bug-{bug_id}"
-    out_dir.mkdir(parents=True, exist_ok=True)
+    # Use existing folder if re-fetching, otherwise create with slug from summary
+    bug_dir = find_existing_bug_dir(out_root, bug_id)
+    if bug_dir is None:
+        slug = slugify(bug["summary"])
+        dir_name = f"{bug_id}-{slug}" if slug else str(bug_id)
+        bug_dir = out_root / dir_name
 
-    write_bug_md(bug, out_dir)
-    write_comments_md(comments, out_dir)
+    # All fetched content goes into the input/ subfolder
+    input_dir = bug_dir / "input"
+    input_dir.mkdir(parents=True, exist_ok=True)
+
+    write_bug_md(bug, input_dir)
+    write_comments_md(comments, input_dir)
     if attachments:
-        write_attachments(attachments, out_dir)
+        write_attachments(attachments, input_dir)
 
-    print(f"Written to {out_dir}/")
+    print(f"Written to {input_dir}/")
     print(f"  bug.md, comments.md" + (", attachments/" if attachments else ""))
 
 

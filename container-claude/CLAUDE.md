@@ -25,7 +25,9 @@ This is a dev container for working on Mozilla NSS (Network Security Services) a
 ## Directory Layout
 - `/workspaces/nss-dev/nss/` — NSS source (git-cinnabar clone from hg.mozilla.org)
 - `/workspaces/nss-dev/nspr/` — NSPR source (git-cinnabar clone from hg.mozilla.org)
-- `/workspaces/nss-dev/bugs/` — Bug context fetched from Bugzilla (markdown summaries, attachments, patches). Each bug lives in `bugs/bug-<id>/` with patches in `attachments/`.
+- `/workspaces/nss-dev/bugs/` — Bug context and reports, one folder per bug. Each bug lives in `bugs/<id>-<slug>/` (e.g., `bugs/1234567-heap-buffer-overread-in-tls-clienthello/`). Legacy folders named `bug-<id>` may also exist. To find a bug folder by number, glob for `*$BUGNUM*`. Each bug folder has two subfolders:
+  - `input/` — fetched from Bugzilla by the host (`bug.md`, `comments.md`, `attachments/`). Treat as read-only context.
+  - `reports/` — tool-generated output (bugfix reports, reviews, triage reports, analysis, coverage). Write all output here.
 - `/workspaces/nss-dev/.nss-exchange.git/` — Bare git repo shared with the host (the `exchange` remote). Push finished branches here.
 - `/workspaces/nss-dev/reference/` — Read-only reference repos (other TLS libraries, Firefox, Thunderbird, specs). Has its own `CLAUDE.md` with details.
 - `/workspaces/nss-dev/dist/` — Default build output directory
@@ -101,19 +103,27 @@ Keep it concise — the reviewer can read the diff.
 - Separate fix and test into two commits (fix first, test second)
 - Do NOT include any Co-Authored-By or attribution trailer
 
-### Analysis and comments → write to `bugs/`
+### Analysis and comments → write to `bugs/<bugnum>/reports/`
 
 Non-patch output — analysis reports, review summaries, prepared Bugzilla
-comments, coverage reports, investigation notes — goes in the bugs folder:
+comments, coverage reports, investigation notes — goes in the `reports/`
+subfolder of the bug directory:
 
 ```
-/workspaces/nss-dev/bugs/<bugnum>/
-├── bugfix-report.md      # fix summary from /nss-bugfix
-├── review.md             # review summary from /nss-review
-├── analysis.md           # investigation notes, root cause analysis
-├── bugzilla-comment.md   # prepared comment for posting to Bugzilla
-├── coverage-report.html  # diff-cover output
-└── ...
+/workspaces/nss-dev/bugs/<id>-<slug>/
+├── input/                  # fetched from Bugzilla (read-only context)
+│   ├── bug.md
+│   ├── comments.md
+│   └── attachments/
+└── reports/                # tool-generated output (write here)
+    ├── bugfix-report.md    # fix summary from /nss-bugfix
+    ├── review.md           # review summary from /nss-review
+    ├── triage-report.md    # triage report from /nss-triage
+    ├── bigger-picture.md   # systemic analysis from /nss-systemize
+    ├── analysis.md         # investigation notes, root cause analysis
+    ├── bugzilla-comment.md # prepared comment for posting to Bugzilla
+    ├── coverage-report.html# diff-cover output
+    └── ...
 ```
 
 Use clear, descriptive filenames. The host user will review these before acting

@@ -108,10 +108,7 @@ echo "Patch file: $PATCH_FILE ($(wc -l < $PATCH_FILE) lines)"
 
 Also check whether a bug folder exists for additional context (summaries, Bugzilla attachments):
 ```sh
-BUG_DIR=""
-for d in /workspaces/nss-dev/bugs/$BUGNUM /workspaces/nss-dev/bugs/bug-$BUGNUM; do
-  [ -d "$d" ] && BUG_DIR="$d" && break
-done
+BUG_DIR=$(ls -d /workspaces/nss-dev/bugs/*${BUGNUM}*/ 2>/dev/null | head -1)
 if [ -n "$BUG_DIR" ]; then
   echo "Bug context available at $BUG_DIR"
   ls "$BUG_DIR"
@@ -122,16 +119,13 @@ fi
 
 **Bug-number mode** — find patch files in the attachments folder:
 ```sh
-BUG_DIR=""
-for d in /workspaces/nss-dev/bugs/$BUGNUM /workspaces/nss-dev/bugs/bug-$BUGNUM; do
-  [ -d "$d" ] && BUG_DIR="$d" && break
-done
+BUG_DIR=$(ls -d /workspaces/nss-dev/bugs/*${BUGNUM}*/ 2>/dev/null | head -1)
 if [ -z "$BUG_DIR" ]; then
   echo "ERROR: no bug folder found for $BUGNUM"
   exit 1
 fi
 
-ATTACH_DIR=$BUG_DIR/attachments
+ATTACH_DIR=$BUG_DIR/input/attachments
 PATCHES=$(ls "$ATTACH_DIR"/*.diff "$ATTACH_DIR"/*.patch 2>/dev/null)
 if [ -z "$PATCHES" ]; then
   echo "ERROR: no .diff or .patch files found in $ATTACH_DIR"
@@ -179,7 +173,7 @@ Set `GTEST_SCRIPT` to the matching script path (e.g., `ssl_gtests/ssl_gtests.sh`
 
 Also determine the `./mach test-coverage --test` argument. This is typically the suite name without the `_gtests` suffix and `_sh` suffix of the script — e.g., `ssl_gtests` for `ssl_gtests/ssl_gtests.sh`. Set `COVERAGE_SUITE` accordingly.
 
-If a `bugs/$BUGNUM/index.md` or similar summary file exists, read it. Treat it as **context**, not **truth** — note any claims it makes that you will need to verify.
+If `$BUG_DIR` was found and contains `input/bug.md` or similar summary files, read them. Treat as **context**, not **truth** — note any claims they make that you will need to verify.
 
 ### 1b. Independently verify the root cause
 
@@ -232,7 +226,7 @@ This phase determines whether the patch's tests actually validate the core issue
 
 **2a. Identify the core issue being fixed.**
 
-Read the bug summary (`bugs/$BUGNUM/index.md` if available), the patch diff, and any commit messages. Answer concisely:
+Read the bug summary (`$BUG_DIR/input/bug.md` if available), the patch diff, and any commit messages. Answer concisely:
 - What is the root cause of the bug? (e.g., buffer overread, use-after-free, integer overflow, logic error, missing validation)
 - What is the trigger condition? (e.g., a specific TLS message, a malformed certificate, a particular API call sequence)
 - What is the security impact? (e.g., crash, information disclosure, authentication bypass, none)
@@ -546,10 +540,12 @@ echo "LCOV: $LCOV_FILE"
 ```sh
 # Use $BUG_DIR if already resolved, otherwise create under the standard path
 if [ -z "$BUG_DIR" ]; then
-  BUG_DIR=/workspaces/nss-dev/bugs/bug-$BUGNUM
+  BUG_DIR=$(ls -d /workspaces/nss-dev/bugs/*${BUGNUM}*/ 2>/dev/null | head -1)
+  : ${BUG_DIR:=/workspaces/nss-dev/bugs/$BUGNUM}
 fi
-mkdir -p "$BUG_DIR"
-COVERAGE_REPORT=$BUG_DIR/coverage-report.html
+REPORTS_DIR=$BUG_DIR/reports
+mkdir -p "$REPORTS_DIR"
+COVERAGE_REPORT=$REPORTS_DIR/coverage-report.html
 diff-cover "$LCOV_FILE" \
   --diff-file "$PATCH_FILE" \
   --html-report "$COVERAGE_REPORT" \
@@ -573,12 +569,14 @@ date -u +%s
 ```
 Calculate elapsed wall-clock time from the start time recorded before Phase 0.
 
-Write the report to `$BUG_DIR/review.md`. Create the directory if it does not exist:
+Write the report to `$REPORTS_DIR/review.md`. Create the directory if it does not exist:
 ```sh
 if [ -z "$BUG_DIR" ]; then
-  BUG_DIR=/workspaces/nss-dev/bugs/bug-$BUGNUM
+  BUG_DIR=$(ls -d /workspaces/nss-dev/bugs/*${BUGNUM}*/ 2>/dev/null | head -1)
+  : ${BUG_DIR:=/workspaces/nss-dev/bugs/$BUGNUM}
 fi
-mkdir -p "$BUG_DIR"
+REPORTS_DIR=$BUG_DIR/reports
+mkdir -p "$REPORTS_DIR"
 ```
 
 Report format:

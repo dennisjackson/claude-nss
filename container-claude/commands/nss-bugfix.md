@@ -62,11 +62,15 @@ All subsequent phases use `$NSS_DIR` and `$NSS_DIST_DIR`. The main checkout at `
 
 ### 1a. Read the bug report
 
-Locate the bug folder. Check both `/workspaces/nss-dev/bugs/$BUGNUM/` and `/workspaces/nss-dev/bugs/bug-$BUGNUM/` — use whichever exists. If neither exists, **stop and ask the user** to fetch the bug data first (e.g., by providing the bug folder or running the bug fetch tool). Do not proceed without bug context.
+Locate the bug folder by globbing for the bug number:
+```sh
+BUG_DIR=$(ls -d /workspaces/nss-dev/bugs/*${BUGNUM}*/ 2>/dev/null | head -1)
+```
+This matches both new-style folders (`1234567-heap-buffer-overread/`) and legacy ones (`bug-1234567/`). If no match is found, **stop and ask the user** to fetch the bug data first (e.g., by providing the bug folder or running the bug fetch tool). Do not proceed without bug context.
 
-Once located, set `BUG_DIR` to the resolved path. All subsequent phases use `$BUG_DIR` for reading and writing bug-related files (reports, coverage output, etc.). Read everything available:
-- `index.md` or any markdown summary — read in full
-- All files in `attachments/` — read patches, test cases, crash logs, stack traces
+All subsequent phases use `$BUG_DIR` as the bug root. Fetched content lives in `$BUG_DIR/input/`; reports go to `$BUG_DIR/reports/`. Read everything available in `input/`:
+- `bug.md`, `comments.md` — read in full
+- All files in `input/attachments/` — read patches, test cases, crash logs, stack traces
 - If multiple bugs were given, read all of them
 
 ### 1b. Identify the core issue(s)
@@ -83,7 +87,7 @@ Read the actual source code in the worktree to confirm your understanding. Use `
 
 ### 1c. Check for existing patches
 
-If the bug folder contains `.diff` or `.patch` files in `attachments/`, read and evaluate them. These may contain a proposed fix from the bug reporter or another developer.
+If the bug folder contains `.diff` or `.patch` files in `input/attachments/`, read and evaluate them. These may contain a proposed fix from the bug reporter or another developer.
 
 **Ask the user how to proceed.** Present a concise assessment of the proposed patch (correct / partially correct / incorrect, with reasoning) and ask whether to:
 1. **Apply and verify** the existing patch (if it looks correct — skip to Phase 4 after applying)
@@ -355,15 +359,19 @@ date -u +%s
 ```
 Calculate elapsed wall-clock time from the start time recorded before Phase 0.
 
-Create the directory if needed and write the report. Use the `$BUG_DIR` resolved in Phase 1a; if no bug folder was found earlier (e.g., working without Bugzilla context), default to the `bug-` prefixed path:
+Create the reports directory if needed. Use the `$BUG_DIR` resolved in Phase 1a; if no bug folder was found earlier (e.g., working without Bugzilla context), default to a numbered path:
 ```sh
 if [ -z "$BUG_DIR" ]; then
-  BUG_DIR=/workspaces/nss-dev/bugs/bug-$BUGNUM
+  BUG_DIR=$(ls -d /workspaces/nss-dev/bugs/*${BUGNUM}*/ 2>/dev/null | head -1)
 fi
-mkdir -p "$BUG_DIR"
+if [ -z "$BUG_DIR" ]; then
+  BUG_DIR=/workspaces/nss-dev/bugs/$BUGNUM
+fi
+REPORTS_DIR=$BUG_DIR/reports
+mkdir -p "$REPORTS_DIR"
 ```
 
-Write the report to `$BUG_DIR/bugfix-report.md`:
+Write the report to `$REPORTS_DIR/bugfix-report.md`:
 
 ```
 # NSS Bug <BUGNUM> — Fix Report
