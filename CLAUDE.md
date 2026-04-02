@@ -18,12 +18,13 @@ build environment it can explore and modify freely without affecting the host.
 ## Host Tools
 
 - `host-tools/bz-fetch.py <bug-id> [...]` — fetch Bugzilla bugs (with comments, attachments, Phabricator diffs) into `bugs/bug-<id>/` as markdown for Claude to read inside the container. Auto-runs envrc setup if `.envrc` is missing.
-- `host-tools/connect.sh` — connect to the dev container. Starts it if stopped, builds it if missing. Auto-runs envrc setup if `.envrc` is missing.
+- `host-tools/connect.sh` — connect to the dev container. Starts it if stopped, builds it if missing. Auto-runs envrc setup if `.envrc` is missing. Syncs reference repos on every connect.
 - `host-tools/sync-host-nss.sh` — fetch exchange branches into `host-nss/` and list what's available for review. Clones NSS automatically on first run.
 - `host-tools/nuke.sh` — destroy container, volumes, and exchange repo (requires typing "nuke"). Warns about uncommitted changes and unmerged branches in `host-nss/`. Prompts separately for wiping `bugs/` and `host-nss/`.
 - `host-tools/internal/fresh-container.sh` — tear down and rebuild the dev container (called by `connect.sh`).
 - `host-tools/internal/setup-host-nss.sh` — clone NSS into `host-nss/` via git-cinnabar and add the exchange remote (called by `sync-host-nss.sh`).
 - `host-tools/internal/setup-envrc.sh` — interactively populate `.envrc` with API keys (`ANTHROPIC_API_KEY`, `BUGZILLA_API_KEY`, `PHABRICATOR_API_TOKEN`). Triggered automatically by `connect.sh` and `bz-fetch.py` when `.envrc` is missing.
+- `host-tools/internal/setup-reference.sh` — clone or update reference repos (TLS libraries, specs) in `reference/repos/` from `reference/sources.txt`. Called automatically by `connect.sh`. Pass `--force` to re-clone from scratch.
 - `host-tools/internal/status.sh` — report container state, persistent volumes, build artifacts, bind mounts, and environment config.
 
 ## Workflow

@@ -30,6 +30,26 @@ AWS's TLS library, designed for simplicity and auditability. Has well-isolated
 handshake and record-layer code that can clarify protocol flows. Its test
 infrastructure (particularly for negative/edge-case testing) is worth studying.
 
+## Firefox
+
+### firefox
+The Firefox browser source tree (gecko-dev mirror). Useful for understanding
+how NSS is integrated and consumed — particularly the PSM (Personal Security
+Manager) layer in `security/manager/`, the certverifier in
+`security/certverifier/`, and the build system integration. When investigating
+how Firefox calls into NSS or how certificate/TLS policy decisions are made at
+the application level, start here.
+
+## Thunderbird
+
+### thunderbird-desktop
+The Thunderbird email client source tree. Useful for understanding how NSS is
+used for email security — particularly S/MIME signing and encryption in
+`mailnews/mime/`, certificate management in `mail/components/`, and the
+account security settings UI. When investigating bugs in CMS/PKCS#7 code,
+PKCS#12 import/export, or certificate verification paths that email clients
+exercise differently from browsers, start here.
+
 ## Specifications
 
 ### tls13-spec

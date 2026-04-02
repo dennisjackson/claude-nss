@@ -11,6 +11,9 @@ if [ ! -f "$PROJ_DIR/.envrc" ]; then
     "$PROJ_DIR/host-tools/internal/setup-envrc.sh"
 fi
 
+# Ensure reference repos are cloned and up to date
+"$PROJ_DIR/host-tools/internal/setup-reference.sh"
+
 # Check for a running container
 RUNNING=$(docker ps -q --filter "label=devcontainer.local_folder=$PROJ_DIR" 2>/dev/null || true)
 if [ -n "$RUNNING" ]; then

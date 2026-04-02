@@ -24,14 +24,16 @@ fi
 # ── Clone / update repos ────────────────────────────────────────────
 mkdir -p "$REF_DIR/repos"
 
-clone_repo() {
+clone_or_update_repo() {
     local url="$1"
     local name
     name="$(basename "$url" .git)"
     local target="$REF_DIR/repos/$name"
 
     if [[ -d "$target/.git" ]] && ! $FORCE; then
-        echo "  [skip] $name (already cloned; use --force to re-clone)"
+        echo "  [pull]  $name"
+        git -C "$target" fetch --depth 1 origin 2>&1 | sed 's/^/         /'
+        git -C "$target" reset --hard FETCH_HEAD 2>&1 | sed 's/^/         /'
         return 0
     fi
 
@@ -44,12 +46,12 @@ clone_repo() {
     git clone --depth 1 "$url" "$target" 2>&1 | sed 's/^/         /'
 }
 
-echo "==> Cloning reference repos into $REF_DIR/repos/ ..."
+echo "==> Syncing reference repos in $REF_DIR/repos/ ..."
 while IFS= read -r line; do
     line="${line%%#*}"       # strip comments
     line="${line// /}"       # strip whitespace
     [[ -z "$line" ]] && continue
-    clone_repo "$line" &
+    clone_or_update_repo "$line" &
 done < "$SOURCES"
 wait
 echo "    Done."

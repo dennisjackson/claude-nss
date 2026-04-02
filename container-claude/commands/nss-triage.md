@@ -138,18 +138,133 @@ For each distinct triggering path, record:
 
 ---
 
-## Phase 3: Assess Exploitability
+## Phase 3: Firefox Impact Assessment
 
-### 3a. Attack surface classification
+Determine how this bug affects Firefox specifically. Firefox is the highest-profile NSS consumer and has its own integration layers, configuration, and sandboxing that shape real-world impact.
 
-Based on Phase 2, classify the overall attack surface:
+### 3a. Find Firefox's NSS call sites
+
+Using the NSS entry points identified in Phase 2, search for how Firefox calls into the vulnerable code paths. Use both the local reference checkout and Searchfox:
+
+```sh
+# Search the local Firefox checkout for references to the vulnerable NSS function(s)
+grep -rn "function_name" /workspaces/nss-dev/reference/repos/firefox/security/ \
+     --include='*.cpp' --include='*.h' --include='*.js'
+
+# Search broader Firefox for the same (may find consumers outside security/)
+searchfox query "function_name" --repo mozilla-central
+```
+
+Key Firefox directories to check:
+- `security/manager/ssl/` — PSM (Personal Security Manager): Firefox's main NSS integration layer
+- `security/certverifier/` — Certificate verification logic
+- `security/nss/` — Build system integration and NSS configuration
+- `netwerk/` — Networking stack (TLS socket setup, certificate callbacks)
+- `dom/crypto/` — WebCrypto API (if the bug is in crypto primitives)
+- `mailnews/mime/` — Thunderbird S/MIME (if the bug is in CMS/PKCS#7)
+
+### 3b. Determine Firefox triggering scenarios
+
+For each Firefox call site that can reach the vulnerable code, determine:
+1. **User action or event**: What would a user be doing when this triggers? (browsing to a malicious site, receiving an email, installing an add-on, visiting a site with a malformed certificate)
+2. **Content process vs. parent process**: Does the vulnerable code run in a sandboxed content process or the privileged parent process? This dramatically affects exploitability.
+   - TLS connections for page loads typically run in the **socket process** (if enabled) or **parent process**
+   - Certificate verification may run in the **content process** depending on the path
+   - Use `searchfox query "NECKO_SOCKET_PROCESS" --repo mozilla-central` or check `security/manager/ssl/` to determine process boundaries
+3. **Sandbox constraints**: If the code runs in a content process, what sandbox level applies? Can the bug escape the sandbox or is the impact contained to a crash?
+4. **Firefox configuration**: Does Firefox enable/disable relevant NSS features by default? Check `security/manager/ssl/nsNSSComponent.cpp` for `SSL_OptionSet` calls and default cipher suite configuration.
+
+### 3c. Check for Firefox-specific mitigations
+
+Determine whether Firefox has any additional protections beyond NSS's own:
+- **Certificate Transparency enforcement** — may limit certificate-based attack vectors
+- **HSTS/HPKP preload** — may prevent downgrade attacks for major sites
+- **Safe Browsing / content filtering** — may block some delivery vectors
+- **Firefox-specific SSL preferences** — `about:config` settings in `security.ssl.*` that override NSS defaults
+- **Process isolation / sandboxing** — Fission, site isolation, sandbox levels
+
+Search for relevant preferences:
+```sh
+searchfox query "security.ssl" --repo mozilla-central
+grep -rn "security.ssl" /workspaces/nss-dev/reference/repos/firefox/modules/libpref/
+```
+
+### 3d. Compile Firefox impact summary
+
+Record:
+1. **Reachable in Firefox?** Yes/No — and via which scenario(s)
+2. **Default Firefox config?** Does Firefox's default configuration expose the vulnerable code path?
+3. **Process context**: Which Firefox process(es) run the vulnerable code?
+4. **Sandbox effectiveness**: Does the sandbox contain the impact? Would the attacker need a sandbox escape?
+5. **Firefox-specific severity adjustment**: Does Firefox's context make the bug more or less severe than the generic NSS assessment? (e.g., a pre-auth remote bug in NSS might only run in a sandboxed content process in Firefox, reducing effective severity)
+
+---
+
+## Phase 4: Thunderbird Impact Assessment
+
+Determine how this bug affects Thunderbird. Thunderbird exercises NSS code paths that browsers rarely touch — particularly S/MIME (CMS/PKCS#7), PKCS#12 certificate import/export, and email-specific TLS configurations. Bugs in these areas may have their highest real-world impact in Thunderbird rather than Firefox.
+
+### 4a. Find Thunderbird's NSS call sites
+
+Using the NSS entry points identified in Phase 2, search for how Thunderbird calls into the vulnerable code paths:
+
+```sh
+# Search the local Thunderbird checkout
+grep -rn "function_name" /workspaces/nss-dev/reference/repos/thunderbird-desktop/ \
+     --include='*.cpp' --include='*.h' --include='*.js' --include='*.jsm'
+
+# Search Searchfox for Thunderbird-specific code (comm-central)
+searchfox query "function_name" --repo comm-central
+```
+
+Key Thunderbird directories to check:
+- `mailnews/mime/` — S/MIME message decoding and verification
+- `mailnews/compose/` — S/MIME signing and encryption during message composition
+- `mailnews/imap/`, `mailnews/local/`, `mailnews/news/` — TLS for mail protocol connections (IMAP, POP3, SMTP, NNTP)
+- `mail/components/` — Certificate and account security management UI
+- `mail/extensions/smime/` — S/MIME extension code and UI
+
+Note: Thunderbird builds on top of Firefox (gecko), so Firefox's `security/manager/ssl/` and `security/certverifier/` code is also reachable from Thunderbird. If Phase 3 already found the bug reachable via those shared paths, note that Thunderbird inherits that exposure and focus this phase on Thunderbird-specific paths.
+
+### 4b. Determine Thunderbird triggering scenarios
+
+For each Thunderbird call site that can reach the vulnerable code, determine:
+1. **User action or event**: What would a user be doing? (receiving an S/MIME-signed email, importing a PKCS#12 certificate, connecting to a mail server with a malformed certificate, opening an encrypted attachment)
+2. **Automatic vs. manual**: Does the vulnerable path trigger automatically (e.g., on message display or background mail fetch) or only via explicit user action (e.g., importing a certificate file)?
+3. **Attack delivery**: How would an attacker deliver the malicious input? (send an email, compromise a mail server's TLS certificate, supply a crafted .p12 file)
+4. **Process context**: Thunderbird's process model differs from Firefox. Determine whether the vulnerable code runs in the main process or a content process, and what sandbox protections apply.
+
+### 4c. Assess S/MIME and email-specific exposure
+
+If the bug is in certificate, CMS/PKCS#7, PKCS#12, or ASN.1 parsing code, evaluate the email-specific attack surface:
+- **S/MIME message processing**: Can the bug be triggered by a received S/MIME signed or encrypted email? This is high-impact because emails can arrive unsolicited.
+- **Certificate import**: Can the bug be triggered via a crafted PKCS#12 file? This requires user interaction (importing the file) but is a common operation.
+- **Mail server TLS**: Can a malicious or compromised mail server trigger the bug during TLS negotiation? This affects every mail connection.
+- **Address book / LDAP**: Does Thunderbird fetch certificates via LDAP for S/MIME? If so, can the bug be triggered through that path?
+
+### 4d. Compile Thunderbird impact summary
+
+Record:
+1. **Reachable in Thunderbird?** Yes/No — and via which scenario(s)
+2. **Thunderbird-specific paths?** Are there triggering paths unique to Thunderbird (S/MIME, PKCS#12 import, mail server TLS) beyond what Firefox shares?
+3. **Automatic trigger?** Can the bug fire without user interaction (e.g., on email receipt/display)?
+4. **Attack delivery complexity**: How hard is it for an attacker to deliver the malicious input? (send an email = easy; compromise a mail server = hard)
+5. **Thunderbird-specific severity adjustment**: Does Thunderbird's context change severity? (e.g., a CMS parsing bug that is only reachable via S/MIME may be unexploitable in Firefox but critical in Thunderbird)
+
+---
+
+## Phase 5: Assess Exploitability
+
+### 5a. Attack surface classification
+
+Based on Phases 2, 3, and 4, classify the overall attack surface:
 - **Remote, pre-auth, default config**: The bug can be triggered by a network attacker against a default NSS deployment. This is the most critical category.
 - **Remote, pre-auth, non-default config**: Requires specific configuration but no authentication.
 - **Remote, post-auth**: The attacker must first establish a valid TLS session or present a valid certificate.
 - **Local / API-only**: The attacker must have local access or control an application that calls NSS APIs directly.
 - **Not practically exploitable**: The code path is dead, unreachable in practice, or requires conditions that cannot occur.
 
-### 3b. Exploitability factors
+### 5b. Exploitability factors
 
 Evaluate factors that affect real-world exploitability:
 - **Reliability**: Can the bug be triggered deterministically, or does it depend on heap layout, timing, or other non-deterministic factors?
@@ -157,7 +272,7 @@ Evaluate factors that affect real-world exploitability:
 - **Mitigations**: What platform mitigations apply? (ASLR, stack canaries, CFI, heap hardening, sandboxing in browsers)
 - **Complexity**: How much reverse engineering, heap grooming, or protocol manipulation is needed?
 
-### 3c. Impact assessment
+### 5c. Impact assessment
 
 Assign an overall severity:
 - **Critical**: Remote code execution or key extraction, pre-auth, default config
@@ -170,7 +285,7 @@ Justify the rating in 2-3 sentences.
 
 ---
 
-## Phase 4: Write Triage Report
+## Phase 6: Write Triage Report
 
 **Record the end time:**
 ```sh
@@ -233,6 +348,28 @@ Write the report to `$BUG_DIR/triage-report.md`:
 | TLS 1.2 client | Yes / No | |
 | DTLS | Yes / No | |
 | [other relevant modes] | Yes / No | |
+
+## Firefox Impact
+
+**Reachable in Firefox?**: [Yes / No]
+**Triggering scenario**: [e.g., "Browsing to a malicious site that sends a crafted certificate"]
+**Firefox call path**: `Firefox function` → ... → `NSS vulnerable function`
+**Process context**: [content process / parent process / socket process]
+**Sandbox contains impact?**: [Yes — crash only / No — parent process / Partial — requires sandbox escape for full impact]
+**Default Firefox config exposes bug?**: [Yes / No — and why]
+**Firefox-specific mitigations**: [CT, process isolation, sandbox level, etc.]
+**Firefox severity adjustment**: [Same as generic / Higher because ... / Lower because ...]
+
+## Thunderbird Impact
+
+**Reachable in Thunderbird?**: [Yes / No]
+**Thunderbird-specific paths?**: [Yes — S/MIME, PKCS#12 import, etc. / No — shared gecko paths only]
+**Triggering scenario**: [e.g., "Receiving an S/MIME signed email with a crafted certificate"]
+**Thunderbird call path**: `Thunderbird function` → ... → `NSS vulnerable function`
+**Automatic trigger?**: [Yes — fires on email receipt/display / No — requires user action]
+**Attack delivery**: [send an email / compromise mail server / supply crafted file / etc.]
+**Process context**: [main process / content process]
+**Thunderbird severity adjustment**: [Same as generic / Higher because ... / Lower because ...]
 
 ## Exploitability Assessment
 

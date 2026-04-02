@@ -7,6 +7,12 @@ https://github.com/google/boringssl
 https://github.com/openssl/openssl
 https://github.com/aws/s2n-tls
 
+# Firefox
+https://github.com/mozilla-firefox/firefox
+
+# Thunderbird
+https://github.com/thunderbird/thunderbird-desktop
+
 # Specifications
 https://github.com/tlswg/tls13-spec
 https://github.com/tlswg/dtls13-spec
