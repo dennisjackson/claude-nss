@@ -99,7 +99,7 @@ RUN cargo install weggli \
 
 # Install searchfox-cli (query Mozilla's Searchfox code search from CLI)
 RUN cargo install searchfox-cli \
-    && searchfox --help > /dev/null
+    && searchfox-cli --help > /dev/null
 
 # angr — binary analysis framework
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install angr
