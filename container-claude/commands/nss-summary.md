@@ -21,14 +21,15 @@ Skip any bugs in `bugs/finished/` — they are done and need no further action. 
 ## Step 2: For each bug, gather state
 
 For each bug directory, read:
-1. `LOG.md` — the full log. The **last entry** is the current state.
-2. Check which reports exist in `reports/` (e.g., `triage-report.md`, `analysis-report.md`, `bugfix-report.md`, `review.md`, `bigger-picture.md`).
-3. Check if `input/` exists and has content (bug was fetched).
-4. Check if any exchange branches exist for this bug number:
+1. `input/bug.md` — extract the bug title/summary (first heading or title field). This is the one-line description.
+2. `LOG.md` — the full log. The **last entry** is the current state.
+3. Check which reports exist in `reports/` (e.g., `triage-report.md`, `analysis-report.md`, `bugfix-report.md`, `review.md`, `bigger-picture.md`).
+4. Check if `input/` exists and has content (bug was fetched).
+5. Check if any exchange branches exist for this bug number:
    ```sh
    git -C /workspaces/nss-dev/.nss-exchange.git branch --list "*BUGNUM*" 2>/dev/null
    ```
-5. Check if any worktrees exist for this bug:
+6. Check if any worktrees exist for this bug:
    ```sh
    git -C /workspaces/nss-dev/nss worktree list | grep -i "BUGNUM" 2>/dev/null
    ```
@@ -65,9 +66,9 @@ Print a summary table, then details for any bugs with warnings. Format:
 ```
 ## Active Bugs
 
-| Bug | Severity | Stage | Last Activity | Next Step |
-|-----|----------|-------|---------------|-----------|
-| ... | ...      | ...   | ...           | ...       |
+| Bug | Description | Severity | Stage | Last Activity | Next Step |
+|-----|-------------|----------|-------|---------------|-----------|
+| ... | ...         | ...      | ...   | ...           | ...       |
 
 ## Finished: [N] bugs in finished/
 
