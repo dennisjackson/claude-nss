@@ -417,6 +417,17 @@ Write the report to `$REPORTS_DIR/bugfix-report.md`:
 | Wall time | [Xm Ys] |
 ```
 
+**Update the bug log.** Append a one-line verdict to `$BUG_DIR/LOG.md`:
+```sh
+NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
+LOG_FILE="$BUG_DIR/LOG.md"
+if [ ! -f "$LOG_FILE" ]; then
+  printf "# Log: Bug %s\n\n" "$BUGNUM" > "$LOG_FILE"
+fi
+# Verdict: terse one-line summary — root cause + branch name
+echo "- $NOW — /nss-bugfix: <root cause in a few words>, fix on branch $BRANCH_NAME" >> "$LOG_FILE"
+```
+
 After writing the report, print:
 1. The branch name and worktree path where the commits live.
 2. The path to the saved report file.

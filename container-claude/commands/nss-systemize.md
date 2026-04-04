@@ -465,6 +465,17 @@ Write the report to `$REPORTS_DIR/bigger-picture.md`:
 | Wall time | [Xm Ys] |
 ```
 
+**Update the bug log.** Append a one-line verdict to `$BUG_DIR/LOG.md`:
+```sh
+NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
+LOG_FILE="$BUG_DIR/LOG.md"
+if [ ! -f "$LOG_FILE" ]; then
+  printf "# Log: Bug %s\n\n" "$BUGNUM" > "$LOG_FILE"
+fi
+# Verdict: terse one-line summary — finding counts and pattern name
+echo "- $NOW — /nss-systemize: <N> high/<N> medium confidence findings of <pattern name>" >> "$LOG_FILE"
+```
+
 After writing the report, print:
 1. The path to the saved report file.
 2. A brief summary: how many high/medium/low findings, which subsystems are affected, and the top recommendation.

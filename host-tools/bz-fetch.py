@@ -314,6 +314,17 @@ def write_attachments(attachments: list, out_dir: Path) -> None:
     (att_dir / "index.md").write_text("\n---\n\n".join(index_lines))
 
 
+def append_log(bug_dir: Path, bug_id: int, message: str) -> None:
+    """Append a timestamped entry to LOG.md in the bug directory."""
+    log_file = bug_dir / "LOG.md"
+    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
+    if not log_file.exists():
+        log_file.write_text(f"# Log: Bug {bug_id}\n\n- {now} — {message}\n")
+    else:
+        with open(log_file, "a") as f:
+            f.write(f"- {now} — {message}\n")
+
+
 def fetch_bug(bug_id: int, out_root: Path) -> None:
     print(f"Fetching bug {bug_id}...")
 
@@ -349,6 +360,8 @@ def fetch_bug(bug_id: int, out_root: Path) -> None:
 
     print(f"Written to {input_dir}/")
     print(f"  bug.md, comments.md" + (", attachments/" if attachments else ""))
+
+    append_log(bug_dir, bug_id, "Fetched from Bugzilla")
 
 
 def ensure_envrc():

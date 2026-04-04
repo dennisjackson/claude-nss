@@ -649,6 +649,17 @@ Report format:
 [Only include if there are observations worth mentioning — correctness concerns, edge cases, style issues in new code. Omit this section entirely if the code looks good.]
 ```
 
+**Update the bug log.** Append a one-line verdict to `$BUG_DIR/LOG.md`:
+```sh
+NOW=$(date -u +"%Y-%m-%d %H:%M UTC")
+LOG_FILE="$BUG_DIR/LOG.md"
+if [ ! -f "$LOG_FILE" ]; then
+  printf "# Log: Bug %s\n\n" "$BUGNUM" > "$LOG_FILE"
+fi
+# Verdict: terse one-line summary — review verdict and key finding
+echo "- $NOW — /nss-review: <APPROVE|NEEDS WORK|NEEDS DISCUSSION> — <one-line summary>" >> "$LOG_FILE"
+```
+
 After writing the report, print:
 1. The path to the saved report file.
 2. If the verdict is **APPROVE** and the patches are in a worktree with commits,

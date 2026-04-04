@@ -23,6 +23,7 @@ build environment it can explore and modify freely without affecting the host.
 - `host-tools/nuke.sh` — destroy container, volumes, and exchange repo (requires typing "nuke"). Warns about uncommitted changes and unmerged branches in `host-nss/`. Prompts separately for wiping `bugs/` and `host-nss/`.
 - `host-tools/internal/fresh-container.sh` — tear down and rebuild the dev container (called by `connect.sh`).
 - `host-tools/internal/setup-host-nss.sh` — clone NSS into `host-nss/` via git-cinnabar and add the exchange remote (called by `sync-host-nss.sh`).
+- `host-tools/log.sh [--done] BUG_NUM "message"` — append a timestamped entry to a bug's `LOG.md`. With `--done`, also moves the bug folder to `bugs/finished/`.
 - `host-tools/internal/setup-envrc.sh` — interactively populate `.envrc` with API keys (`ANTHROPIC_API_KEY`, `BUGZILLA_API_KEY`, `PHABRICATOR_API_TOKEN`). Triggered automatically by `connect.sh` and `bz-fetch.py` when `.envrc` is missing.
 - `host-tools/internal/setup-reference.sh` — clone or update reference repos (TLS libraries, specs) in `reference/repos/` from `reference/sources.txt`. Called automatically by `connect.sh`. Pass `--force` to re-clone from scratch.
 - `host-tools/internal/status.sh` — report container state, persistent volumes, build artifacts, bind mounts, and environment config.
