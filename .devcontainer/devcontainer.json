@@ -33,6 +33,7 @@
   "mounts": [
     "source=nss-dev-nspr,target=/workspaces/nss-dev/nspr,type=volume",
     "source=nss-dev-nss,target=/workspaces/nss-dev/nss,type=volume",
+    "source=nss-dev-worktrees,target=/workspaces/nss-dev/worktrees,type=volume",
     "source=nss-dev-ccache,target=/workspaces/nss-dev/.ccache,type=volume",
     "source=${localWorkspaceFolder}/.git,target=/workspaces/config/.git,type=bind,readonly",
     "source=${localWorkspaceFolder}/.devcontainer,target=/workspaces/config/.devcontainer,type=bind,readonly",

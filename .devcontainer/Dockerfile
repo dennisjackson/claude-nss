@@ -12,8 +12,8 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get -y install --no-install-recommends \
         clang-18 clang-format-18 clang-tidy-18 clang-tools-18 \
-        lld-18 lldb-18 libclang-rt-18-dev libfuzzer-18-dev \
-        llvm-18 \
+        lld-18 lldb-18 libclang-18-dev libclang-rt-18-dev libfuzzer-18-dev \
+        llvm-18 llvm-18-dev \
     && for tool in clang clang++ clang-format clang-tidy clang-cpp lld lldb \
                    asan_symbolize llvm-symbolizer llvm-ar llvm-nm llvm-objdump \
                    llvm-ranlib llvm-strip llvm-profdata llvm-cov; do \

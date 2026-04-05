@@ -37,8 +37,18 @@ else
     printf '  Container:  %snone found%s\n' "$dim" "$reset"
 fi
 
-# Volumes
-for vol in nss-dev-nss nss-dev-nspr nss-dev-ccache; do
+# Ephemeral volume (ccache)
+vol="nss-dev-ccache"
+info=$(docker volume inspect "$vol" --format '{{.CreatedAt}}' 2>/dev/null || true)
+if [ -n "$info" ]; then
+    printf '  Volume:     %s  %s(created: %s)%s\n' "$vol" "$dim" "$info" "$reset"
+else
+    printf '  Volume:     %s  %snot found%s\n' "$vol" "$dim" "$reset"
+fi
+
+# Source volumes (nss, nspr, worktrees) — shown but handled separately
+section "Source volumes (prompted separately)"
+for vol in nss-dev-nss nss-dev-nspr nss-dev-worktrees; do
     info=$(docker volume inspect "$vol" --format '{{.CreatedAt}}' 2>/dev/null || true)
     if [ -n "$info" ]; then
         printf '  Volume:     %s  %s(created: %s)%s\n' "$vol" "$dim" "$info" "$reset"
@@ -83,7 +93,7 @@ bugs_dir="$PROJ_DIR/bugs"
 
 # --- Confirm -----------------------------------------------------------------
 echo ""
-printf '%s%sThis will permanently delete the container, volumes, and exchange repo.%s\n' "$bold" "$red" "$reset"
+printf '%s%sThis will permanently delete the container, ccache volume, and exchange repo.%s\n' "$bold" "$red" "$reset"
 printf 'Type "nuke" to confirm: '
 read -r confirm
 
@@ -104,16 +114,14 @@ else
     ok "No container to remove"
 fi
 
-# --- Destroy volumes ---------------------------------------------------------
-section "Removing volumes"
+# --- Destroy ccache volume ---------------------------------------------------
+section "Removing ccache volume"
 
-for vol in nss-dev-nss nss-dev-nspr nss-dev-ccache; do
-    if docker volume rm "$vol" >/dev/null 2>&1; then
-        ok "Removed $vol"
-    else
-        ok "$vol already absent"
-    fi
-done
+if docker volume rm nss-dev-ccache >/dev/null 2>&1; then
+    ok "Removed nss-dev-ccache"
+else
+    ok "nss-dev-ccache already absent"
+fi
 
 # --- Reset exchange repo -----------------------------------------------------
 section "Resetting exchange repo"
@@ -125,6 +133,35 @@ if [ -d "$exchange_dir" ]; then
 else
     git init --bare "$exchange_dir" >/dev/null 2>&1
     ok "Exchange repo created"
+fi
+
+# --- Optionally wipe source volumes (nss, nspr, worktrees) ------------------
+section "Source volumes (nss, nspr, worktrees)"
+
+source_vols_exist=false
+for vol in nss-dev-nss nss-dev-nspr nss-dev-worktrees; do
+    if docker volume inspect "$vol" >/dev/null 2>&1; then
+        source_vols_exist=true
+        break
+    fi
+done
+
+if $source_vols_exist; then
+    printf '  These volumes hold your NSS/NSPR checkouts and worktrees.\n'
+    printf '  They take a while to re-clone if deleted.\n\n'
+    if ask_yes_no "Wipe source volumes (nss, nspr, worktrees)?"; then
+        for vol in nss-dev-nss nss-dev-nspr nss-dev-worktrees; do
+            if docker volume rm "$vol" >/dev/null 2>&1; then
+                ok "Removed $vol"
+            else
+                ok "$vol already absent"
+            fi
+        done
+    else
+        ok "Source volumes kept"
+    fi
+else
+    ok "No source volumes present"
 fi
 
 # --- Optionally wipe bugs/ --------------------------------------------------
