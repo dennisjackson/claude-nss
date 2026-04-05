@@ -45,6 +45,40 @@ For each bug directory:
 You can batch the `ls` and `git` commands for all bugs in parallel to be efficient.
 
 
+## Step 2b: Survey worktrees
+
+List all git worktrees and non-infrastructure contents of `/workspaces/nss-dev/worktrees/`:
+
+```sh
+git -C /workspaces/nss-dev/nss worktree list 2>/dev/null
+ls /workspaces/nss-dev/worktrees/ 2>/dev/null
+```
+
+For each worktree directory that is an actual git worktree (not `nspr`, `dist`, or `tests_results`):
+1. Check if it has a branch or is detached:
+   ```sh
+   git -C /workspaces/nss-dev/worktrees/<name> branch --show-current 2>/dev/null
+   ```
+2. Get the top commits (just the ones above trunk):
+   ```sh
+   git -C /workspaces/nss-dev/worktrees/<name> log --oneline -5 2>/dev/null
+   ```
+3. Check for uncommitted changes:
+   ```sh
+   git -C /workspaces/nss-dev/worktrees/<name> status --short 2>/dev/null
+   ```
+
+Include a **Worktrees** section in the output (after the Active Bugs table) listing each worktree with: name, branch (or "detached"), number of commits above trunk, whether it has uncommitted changes, and which bug it relates to (if any). Flag worktrees for finished bugs as candidates for cleanup. Example format:
+
+```
+## Worktrees
+
+| Worktree | Branch | Commits | Dirty | Related Bug | Note |
+|----------|--------|---------|-------|-------------|------|
+| fix-2029323 | detached | 2 | no | 2029323 (finished) | Can be removed |
+| my-feature | bug-NNN-foo | 0 | yes (3 files) | NNN | Work in progress |
+```
+
 ## Step 3: Sanity checks
 
 For each active bug, flag issues:
