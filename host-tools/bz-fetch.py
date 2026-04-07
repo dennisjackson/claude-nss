@@ -141,16 +141,6 @@ def write_comments_md(comments: list, out_dir: Path) -> None:
     (out_dir / "comments.md").write_text("\n---\n\n".join(parts))
 
 
-TEXT_TYPES = {
-    "text/plain", "text/x-patch", "text/x-diff", "application/x-patch",
-    "application/json", "text/html", "text/css", "text/javascript",
-    "application/xml", "text/xml",
-}
-
-def is_text(content_type: str) -> bool:
-    base = content_type.split(";")[0].strip().lower()
-    return base in TEXT_TYPES or base.startswith("text/")
-
 
 def phab_conduit(method: str, params: dict) -> dict:
     """Call a Phabricator Conduit API method. Requires PHABRICATOR_API_TOKEN."""
@@ -243,6 +233,8 @@ def write_attachments(attachments: list, out_dir: Path) -> None:
     att_dir.mkdir(exist_ok=True)
 
     index_lines = [f"# Attachments for Bug {attachments[0]['bug_id']}\n" if attachments else "# Attachments\n"]
+    # Track Phabricator diffs for ordered apply instructions
+    phab_diffs = []  # list of (revision_str, filename)
 
     for att in attachments:
         aid = att["id"]
@@ -288,7 +280,9 @@ def write_attachments(attachments: list, out_dir: Path) -> None:
                     safe_name = re.sub(r"[^\w.\-]", "_", f"{revision}.diff")
                     out_path = att_dir / f"{aid}-{safe_name}"
                     out_path.write_text(diff)
-                    index_lines[-1] += f"\n```diff\n{diff}\n```\n"
+                    index_lines[-1] += f"\n*diff saved to `attachments/{out_path.name}`*\n"
+                    if not att.get("is_obsolete"):
+                        phab_diffs.append((revision, out_path.name))
                 else:
                     index_lines[-1] += "\n*(could not fetch diff)*\n"
             else:
@@ -300,16 +294,16 @@ def write_attachments(attachments: list, out_dir: Path) -> None:
         out_path = att_dir / f"{aid}-{safe_name}"
         out_path.write_bytes(decoded)
 
-        if is_text(ctype) or is_patch:
-            try:
-                text_content = decoded.decode("utf-8", errors="replace")
-                # Inline text content in the index
-                fence = "diff" if is_patch or "patch" in ctype or "diff" in ctype else "text"
-                index_lines[-1] += f"\n```{fence}\n{text_content}\n```\n"
-            except Exception:
-                index_lines[-1] += f"\n*saved to `attachments/{out_path.name}`*\n"
-        else:
-            index_lines[-1] += f"\n*binary file saved to `attachments/{out_path.name}`*\n"
+        index_lines[-1] += f"\n*saved to `attachments/{out_path.name}`*\n"
+
+    # Add ordered apply instructions if there are multiple Phabricator diffs
+    if phab_diffs:
+        phab_diffs.sort(key=lambda x: int(x[0][1:]))  # sort by revision number
+        apply_lines = "\n## Applying Phabricator Diffs\n\n"
+        apply_lines += "Apply in this order (sorted by revision number):\n\n"
+        for rev, fname in phab_diffs:
+            apply_lines += f"1. `git apply attachments/{fname}` ({rev})\n"
+        index_lines.append(apply_lines)
 
     (att_dir / "index.md").write_text("\n---\n\n".join(index_lines))
 

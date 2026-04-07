@@ -26,7 +26,7 @@ This is a dev container for working on Mozilla NSS (Network Security Services) a
 - `/workspaces/nss-dev/nss/` — NSS source (git-cinnabar clone from hg.mozilla.org)
 - `/workspaces/nss-dev/nspr/` — NSPR source (git-cinnabar clone from hg.mozilla.org)
 - `/workspaces/nss-dev/bugs/` — Bug context and reports, one folder per bug. Each bug lives in `bugs/<id>-<slug>/` (e.g., `bugs/1234567-heap-buffer-overread-in-tls-clienthello/`). Legacy folders named `bug-<id>` may also exist. To find a bug folder by number, glob for `*$BUGNUM*`. Each bug folder has:
-  - `input/` — fetched from Bugzilla by the host (`bug.md`, `comments.md`, `attachments/`). Treat as read-only context.
+  - `input/` — fetched from Bugzilla by the host (`bug.md`, `comments.md`, `attachments/`). Treat as read-only context. Phabricator diffs are saved as `.diff` files in `attachments/` — apply them with `git apply` from inside a worktree. If multiple diffs exist, check `attachments/index.md` for the correct apply order (sorted by revision number).
   - `reports/` — tool-generated output (bugfix reports, reviews, triage reports, analysis, coverage). Write all output here.
   - `LOG.md` — timestamped activity log. Created automatically on first fetch; workflow commands (`/nss-bugfix`, `/nss-triage`, `/nss-review`, `/nss-systemize`) append a one-line verdict when they complete. Do not overwrite — always append.
 - `/workspaces/nss-dev/.nss-exchange.git/` — Bare git repo shared with the host (the `exchange` remote). Push finished branches here.
