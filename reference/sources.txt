@@ -13,6 +13,9 @@ https://github.com/mozilla-firefox/firefox
 # Thunderbird
 https://github.com/thunderbird/thunderbird-desktop
 
+# Sandboxing
+https://github.com/PLSysSec/rlbox
+
 # Specifications
 https://github.com/tlswg/tls13-spec
 https://github.com/tlswg/dtls13-spec

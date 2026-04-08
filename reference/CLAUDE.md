@@ -50,6 +50,16 @@ account security settings UI. When investigating bugs in CMS/PKCS#7 code,
 PKCS#12 import/export, or certificate verification paths that email clients
 exercise differently from browsers, start here.
 
+## Sandboxing
+
+### rlbox
+RLBox sandboxing framework (PLSysSec). Used by Firefox to sandbox third-party
+C/C++ libraries (e.g., graphite, hunspell, woff2) by isolating them in
+WebAssembly or process boundaries. Useful for understanding how Mozilla applies
+library sandboxing — the API surface, tainted types, and validation patterns
+are relevant when considering how NSS or its dependencies could be similarly
+isolated.
+
 ## Specifications
 
 ### tls13-spec
