@@ -48,7 +48,7 @@
         "munmap", "name_to_handle_at", "nanosleep", "newfstatat",
         "_newselect", "open", "openat", "openat2", "open_tree",
         "pause", "pidfd_open", "pidfd_send_signal", "pipe", "pipe2",
-        "pivot_root", "pkey_alloc", "pkey_free", "pkey_mprotect",
+        "pkey_alloc", "pkey_free", "pkey_mprotect",
         "poll", "ppoll", "ppoll_time64",
         "prctl",
         "pread64", "preadv", "preadv2",
