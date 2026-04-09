@@ -37,7 +37,8 @@
     "source=nss-dev-ccache,target=/workspaces/nss-dev/.ccache,type=volume",
     "source=${localWorkspaceFolder}/.git,target=/workspaces/config/.git,type=bind,readonly",
     "source=${localWorkspaceFolder}/.devcontainer,target=/workspaces/config/.devcontainer,type=bind,readonly",
-    "source=${localWorkspaceFolder}/container-claude,target=/workspaces/nss-dev/.claude,type=bind",
+    "source=${localWorkspaceFolder}/container-claude,target=/workspaces/nss-dev/.claude,type=bind,readonly",
+    "source=${localWorkspaceFolder}/container-claude/commands,target=/workspaces/nss-dev/.claude/commands,type=bind",
     "source=${localWorkspaceFolder}/bugs,target=/workspaces/nss-dev/bugs,type=bind",
     "source=${localWorkspaceFolder}/.nss-exchange.git,target=/workspaces/nss-dev/.nss-exchange.git,type=bind",
     "source=${localWorkspaceFolder}/reference,target=/workspaces/nss-dev/reference,type=bind,readonly"
