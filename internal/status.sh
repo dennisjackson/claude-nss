@@ -55,7 +55,7 @@ fi
 # --- Persistent volumes ------------------------------------------------------
 section "Persistent Volumes"
 
-vol="claude-dev-ccache"
+vol="claude-dev-sccache"
 info=$(docker volume inspect "$vol" --format '{{.CreatedAt}}' 2>/dev/null || true)
 if [ -n "$info" ]; then
     ok "$vol  ${dim}(created: $info)${reset}"
@@ -63,14 +63,14 @@ else
     warn "$vol  — not found (will be created on first container start)"
 fi
 
-# If container is running, show ccache stats
+# If container is running, show sccache stats
 if [ -n "$CONTAINER_ID" ]; then
-    ccache_stats=$(cexec env CCACHE_DIR=/.ccache ccache --show-stats 2>/dev/null || echo "unavailable")
-    if [ "$ccache_stats" != "unavailable" ]; then
-        cache_size=$(echo "$ccache_stats" | grep -i "cache size" | head -1 | sed 's/.*: *//' || echo "?")
-        hit_rate=$(echo "$ccache_stats" | grep -i "hit rate" | head -1 | sed 's/.*: *//' || true)
-        kv "ccache size:" "$cache_size"
-        [ -n "$hit_rate" ] && kv "ccache hit rate:" "$hit_rate"
+    sccache_stats=$(cexec sccache --show-stats 2>/dev/null || echo "unavailable")
+    if [ "$sccache_stats" != "unavailable" ]; then
+        cache_size=$(echo "$sccache_stats" | grep -i "cache size" | head -1 | sed 's/.*: *//' || echo "?")
+        hit_rate=$(echo "$sccache_stats" | grep -i "hit rate" | head -1 | sed 's/.*: *//' || true)
+        kv "sccache size:" "$cache_size"
+        [ -n "$hit_rate" ] && kv "sccache hit rate:" "$hit_rate"
     fi
 fi
 

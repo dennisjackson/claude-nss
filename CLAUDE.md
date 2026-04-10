@@ -17,7 +17,7 @@ on the host and is bind-mounted into the container.
 
 ## How It Works
 
-The container is generic — it has the toolchain, Claude Code, and a ccache
+The container is generic — it has the toolchain, Claude Code, and a sccache
 volume but no project-specific content. You point `cbx-connect` at a **project
 folder** on the host and that folder gets bind-mounted read-write into the
 container at `/workspaces/project/`.
@@ -31,12 +31,12 @@ the container will pick up the project's CLAUDE.md and commands automatically.
 - `cbx-connect <project-dir>` — mount the given project directory into the dev
   container and connect. Creates the container on first use, recreates it when
   switching projects. Auto-runs envrc setup if `.envrc` is missing.
-- `cbx-nuke` — destroy the container and ccache volume (requires typing "nuke").
+- `cbx-nuke` — destroy the container and sccache volume (requires typing "nuke").
 - `internal/fresh-container.sh` — tear down and rebuild the dev container.
 - `internal/setup-envrc.sh` — interactively populate `.envrc` with
   `ANTHROPIC_API_KEY`. Triggered automatically by `cbx-connect` when `.envrc` is
   missing.
-- `internal/status.sh` — report container state, ccache volume, and
+- `internal/status.sh` — report container state, sccache volume, and
   environment config.
 
 ## Workflow
@@ -121,8 +121,8 @@ any sections that are affected. In particular:
 ## Toolchain
 
 The container ships **Clang 18** (from the official LLVM apt repository) and
-defaults to `CC="ccache clang" CXX="ccache clang++"`. The ccache directory is
-backed by a named Docker volume (`claude-dev-ccache`) so it persists across
+defaults to `CC="sccache clang" CXX="sccache clang++"`. The sccache directory
+is backed by a named Docker volume (`claude-dev-sccache`) so it persists across
 container rebuilds and project switches.
 
 ## Design Principles

@@ -31,7 +31,7 @@ cbx-connect /path/to/my-project
 ```
 
 Builds the container on first run, then mounts your project folder and drops
-you into a shell. Claude Code is pre-installed. The ccache volume persists
+you into a shell. Claude Code is pre-installed. The sccache volume persists
 across container rebuilds and project switches.
 
 On first run this prompts for your Anthropic API key and writes it to `.envrc`.
@@ -50,14 +50,14 @@ host.
 | Script | Purpose |
 |--------|---------|
 | `cbx-connect <project-dir>` | Mount a project folder and connect to the container. |
-| `cbx-nuke` | Destroy container and ccache volume. Requires typing "nuke". |
+| `cbx-nuke` | Destroy container and sccache volume. Requires typing "nuke". |
 | `internal/status.sh` | Report container state and environment config. |
 | `internal/fresh-container.sh` | Tear down and rebuild the container. |
 | `internal/setup-envrc.sh` | Set up `.envrc` with API key. |
 
 ## Container Contents
 
-The container includes Clang 18, ccache, gdb, valgrind, clang-tidy,
+The container includes Clang 18, sccache, gdb, valgrind, clang-tidy,
 clang-format, cppcheck, weggli, semgrep, lcov, diff-cover, AFL++, angr, Z3,
 searchfox-cli, git-cinnabar, Rust, tlslite-ng, and Claude Code.
 
@@ -65,7 +65,7 @@ searchfox-cli, git-cinnabar, Rust, tlslite-ng, and Claude Code.
 
 ```
 /workspaces/project/     Your project folder (bind-mounted from host)
-/.ccache/                Compiler cache (Docker volume, persists across projects)
+/.sccache/               Compiler cache (Docker volume, persists across projects)
 ```
 
 ## Security Model

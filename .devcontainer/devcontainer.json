@@ -31,7 +31,7 @@
     }
   },
   "mounts": [
-    "source=claude-dev-ccache,target=/.ccache,type=volume",
+    "source=claude-dev-sccache,target=/.sccache,type=volume",
     "source=${localWorkspaceFolder}/.devcontainer,target=/workspaces/config/.devcontainer,type=bind,readonly",
     "source=${localWorkspaceFolder}/container-claude,target=/workspaces/config/container-claude,type=bind,readonly",
     "source=${localEnv:PROJECT_DIR},target=/workspaces/project,type=bind"

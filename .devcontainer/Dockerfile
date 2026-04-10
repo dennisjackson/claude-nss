@@ -38,6 +38,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         pipx \
         zlib1g-dev \
         libsqlite3-dev \
+        direnv \
         mercurial \
         perl \
         psmisc \
@@ -52,19 +53,6 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 # diff-cover — show coverage diff between branches
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install diff-cover
 
-# ccache — dramatically speeds up rebuilds by caching object files.
-# The cache directory is backed by a named volume so it survives container
-# rebuilds. CC/CXX default to ccache-wrapped clang.
-RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get -y install --no-install-recommends ccache \
-    && apt-get autoremove -y && apt-get clean -y \
-    && rm -rf /var/lib/apt/lists/*
-
-ENV CCACHE_DIR=/.ccache \
-    CCACHE_MAXSIZE=5G \
-    CCACHE_COMPRESS=1 \
-    CC="ccache clang" \
-    CXX="ccache clang++"
 
 # Install Node.js 22 LTS (Ubuntu 22.04's packaged version is too old for Claude Code)
 RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
@@ -100,6 +88,18 @@ RUN cargo install weggli \
 RUN cargo install searchfox-cli \
     && searchfox-cli --help > /dev/null
 
+# sccache — shared compiler cache, dramatically speeds up rebuilds.
+# The cache directory is backed by a named volume so it survives container
+# rebuilds. CC/CXX default to sccache-wrapped clang.
+RUN cargo install sccache \
+    && sccache --version
+
+ENV SCCACHE_DIR=/.sccache \
+    SCCACHE_CACHE_SIZE=5G \
+    RUSTC_WRAPPER=sccache \
+    CC="sccache clang" \
+    CXX="sccache clang++"
+
 # angr — binary analysis framework
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install angr
 
@@ -123,12 +123,19 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
 # semgrep — pattern-based static analysis
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install semgrep
 
+# Homebrew (Linuxbrew) — used for packages not in Ubuntu repos
+RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" \
+    && /home/linuxbrew/.linuxbrew/bin/brew install watchman \
+    && /home/linuxbrew/.linuxbrew/bin/watchman version
+
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+
 # Install Claude Code
 RUN npm install -g @anthropic-ai/claude-code \
     && claude --version
 
-# Create workspace and ccache directories.
+# Create workspace and sccache directories.
 # Volume mount points must be owned by vscode before volumes are attached,
 # so that Docker preserves ownership when creating empty named volumes.
-RUN mkdir -p /workspaces/project /.ccache \
-    && chown -R vscode:vscode /workspaces /.ccache
+RUN mkdir -p /workspaces/project /.sccache \
+    && chown -R vscode:vscode /workspaces /.sccache

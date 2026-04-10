@@ -44,8 +44,8 @@ else
     printf '  Container:  %snone found%s\n' "$dim" "$reset"
 fi
 
-# ccache volume
-vol="claude-dev-ccache"
+# sccache volume
+vol="claude-dev-sccache"
 info=$(docker volume inspect "$vol" --format '{{.CreatedAt}}' 2>/dev/null || true)
 if [ -n "$info" ]; then
     printf '  Volume:     %s  %s(created: %s)%s\n' "$vol" "$dim" "$info" "$reset"
@@ -55,7 +55,7 @@ fi
 
 # --- Confirm -----------------------------------------------------------------
 echo ""
-printf '%s%sThis will permanently delete the container and ccache volume.%s\n' "$bold" "$red" "$reset"
+printf '%s%sThis will permanently delete the container and sccache volume.%s\n' "$bold" "$red" "$reset"
 printf 'Type "nuke" to confirm: '
 read -r confirm
 
@@ -76,13 +76,13 @@ else
     ok "No container to remove"
 fi
 
-# --- Destroy ccache volume ---------------------------------------------------
-section "Removing ccache volume"
+# --- Destroy sccache volume --------------------------------------------------
+section "Removing sccache volume"
 
-if docker volume rm claude-dev-ccache >/dev/null 2>&1; then
-    ok "Removed claude-dev-ccache"
+if docker volume rm claude-dev-sccache >/dev/null 2>&1; then
+    ok "Removed claude-dev-sccache"
 else
-    ok "claude-dev-ccache already absent"
+    ok "claude-dev-sccache already absent"
 fi
 
 echo ""

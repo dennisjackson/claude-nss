@@ -10,10 +10,10 @@ Follow those instructions.
 ## Installed Tools
 
 ### Compilers & Build
-- **Clang 18** (default) -- `CC="ccache clang"`, `CXX="ccache clang++"`
+- **Clang 18** (default) -- `CC="sccache clang"`, `CXX="sccache clang++"`
 - **build-essential** (gcc/g++), **CMake**, **Ninja**, **gyp**, **pkg-config**
 - **bear** -- generate `compile_commands.json`
-- **ccache** -- compiler cache backed by a persistent volume at `/.ccache`
+- **sccache** -- compiler cache backed by a persistent volume at `/.sccache`
 
 ### Debugging & Static Analysis
 - **gdb**, **valgrind**
@@ -40,9 +40,16 @@ Follow those instructions.
 - **git**, **git-cinnabar** (Mercurial repos via git), **Mercurial**
 - **searchfox-cli** -- query Mozilla's Searchfox code search
 
+### File Watching
+- **watchman** -- filesystem change watcher
+
+### Environment
+- **direnv** -- automatic per-directory environment variables
+- **Homebrew** -- package manager (Linuxbrew) at `/home/linuxbrew/.linuxbrew/`
+
 ## Workspace Layout
 
 ```
 /workspaces/project/     Your project (bind-mounted from host)
-/.ccache/                Compiler cache (persists across container rebuilds)
+/.sccache/               Compiler cache (persists across container rebuilds)
 ```
