@@ -121,7 +121,9 @@ any sections that are affected. In particular:
 ## Toolchain
 
 The container ships **Clang 18** (from the official LLVM apt repository) and
-defaults to `CC="sccache clang" CXX="sccache clang++"`. The sccache directory
+defaults to `CC=clang CXX=clang++`. sccache is available but not
+wired into CC/CXX by default, since projects like Mozilla manage their own
+sccache wrapping. RUSTC_WRAPPER is still set to sccache. The sccache directory
 is backed by a named Docker volume (`claude-dev-sccache`) so it persists across
 container rebuilds and project switches.
 

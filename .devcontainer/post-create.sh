@@ -43,6 +43,14 @@ cat > ~/.claude.json << PREFS
 }
 PREFS
 
+echo "==> Pre-trusting project .envrc (if present)..."
+if [ -f "${WORKSPACE}/.envrc" ]; then
+    direnv allow "${WORKSPACE}"
+    echo "    direnv: allowed ${WORKSPACE}/.envrc"
+else
+    echo "    no .envrc found, skipping"
+fi
+
 echo "==> Configuring git identity from host..."
 IDENTITY_FILE="${WORKSPACE}/.host-git-identity"
 if [ -f "${IDENTITY_FILE}" ]; then

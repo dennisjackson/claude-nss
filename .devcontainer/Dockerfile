@@ -45,10 +45,17 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         procps \
         lcov \
         bear \
+        vim \
+        tmux \
         ca-certificates \
         curl \
     && apt-get autoremove -y && apt-get clean -y \
         && rm -rf /var/lib/apt/lists/*
+
+# micro — terminal text editor
+RUN curl -fsSL https://getmic.ro | bash \
+    && mv micro /usr/local/bin/ \
+    && micro --version
 
 # diff-cover — show coverage diff between branches
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install diff-cover
@@ -90,15 +97,16 @@ RUN cargo install searchfox-cli \
 
 # sccache — shared compiler cache, dramatically speeds up rebuilds.
 # The cache directory is backed by a named volume so it survives container
-# rebuilds. CC/CXX default to sccache-wrapped clang.
+# rebuilds. sccache is available but not wired into CC/CXX by default,
+# because projects like Mozilla manage their own sccache wrapping.
 RUN cargo install sccache \
     && sccache --version
 
 ENV SCCACHE_DIR=/.sccache \
     SCCACHE_CACHE_SIZE=5G \
     RUSTC_WRAPPER=sccache \
-    CC="sccache clang" \
-    CXX="sccache clang++"
+    CC=clang \
+    CXX=clang++
 
 # angr — binary analysis framework
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install angr
@@ -132,6 +140,10 @@ RUN NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.co
 USER root
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:$PATH"
+
+# uv — fast Python package manager and runner
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin sh \
+    && uv --version
 
 # Install Claude Code
 RUN npm install -g @anthropic-ai/claude-code \

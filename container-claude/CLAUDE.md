@@ -10,7 +10,7 @@ Follow those instructions.
 ## Installed Tools
 
 ### Compilers & Build
-- **Clang 18** (default) -- `CC="sccache clang"`, `CXX="sccache clang++"`
+- **Clang 18** (default) -- `CC=clang`, `CXX=clang++`
 - **build-essential** (gcc/g++), **CMake**, **Ninja**, **gyp**, **pkg-config**
 - **bear** -- generate `compile_commands.json`
 - **sccache** -- compiler cache backed by a persistent volume at `/.sccache`
@@ -31,7 +31,7 @@ Follow those instructions.
 
 ### Languages
 - **Rust** (rustc, cargo)
-- **Python 3**, **Node.js 22**
+- **Python 3**, **uv** (fast Python package manager), **Node.js 22**
 
 ### Networking
 - **tlslite-ng** -- pure-Python TLS implementation
@@ -42,6 +42,12 @@ Follow those instructions.
 
 ### File Watching
 - **watchman** -- filesystem change watcher
+
+### Editors
+- **vim**, **micro**
+
+### Terminal
+- **tmux** -- terminal multiplexer
 
 ### Environment
 - **direnv** -- automatic per-directory environment variables

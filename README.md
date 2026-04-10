@@ -59,7 +59,8 @@ host.
 
 The container includes Clang 18, sccache, gdb, valgrind, clang-tidy,
 clang-format, cppcheck, weggli, semgrep, lcov, diff-cover, AFL++, angr, Z3,
-searchfox-cli, git-cinnabar, Rust, tlslite-ng, and Claude Code.
+searchfox-cli, git-cinnabar, Rust, uv, tlslite-ng, vim, micro, tmux, and
+Claude Code.
 
 ### Workspace layout
 
