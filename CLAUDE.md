@@ -10,6 +10,7 @@ on the host and is bind-mounted into the container.
 | Path | Purpose |
 |---|---|
 | `.devcontainer/` | Dockerfile, devcontainer.json, seccomp profile, post-create script |
+| `container-claude/` | CLAUDE.md and settings.json provisioned into the container (read-only) |
 | `connect.sh`, `nuke.sh` | Top-level host scripts (connect to container, destroy it) |
 | `internal/` | Helper scripts (fresh-container, status, envrc setup) |
 | `.envrc` | Anthropic API key (not tracked in git) |
@@ -76,8 +77,9 @@ host-side Claude into executing arbitrary commands.
   (`.devcontainer/seccomp.json`) extends Docker's default allowlist with
   `ptrace` and `personality` (ADDR_NO_RANDOMIZE) for ASan support. All other
   blocked syscalls (kexec_load, bpf, userfaultfd, etc.) remain blocked.
-- **Read-only config mount** — `.devcontainer` is mounted read-only so the
-  container cannot tamper with its own build definition.
+- **Read-only config mounts** — `.devcontainer` and `container-claude` are
+  mounted read-only so the container cannot tamper with its own build
+  definition, CLAUDE.md, or settings.json.
 - **No Docker socket** — the container has no access to the Docker daemon.
 - **Non-root user** — the container runs as `vscode`, not root.
 - **API key exposure** — `ANTHROPIC_API_KEY` is passed into the container via
@@ -92,17 +94,29 @@ host-side Claude into executing arbitrary commands.
 - The container has full outbound network access and could exfiltrate the API
   key or fetch malicious payloads.
 
-## Maintaining This File
+## Keeping Documentation in Sync
 
-When changing `.devcontainer/Dockerfile`, `devcontainer.json`, or
-`post-create.sh`, review this file and update any sections that are affected.
-In particular:
+Three files document this project and must stay consistent with each other and
+with the actual container configuration:
+
+| File | Audience | Purpose |
+|---|---|---|
+| `CLAUDE.md` (this file) | Host-side Claude / maintainers | Full project documentation |
+| `README.md` | Human users | Setup guide and quick reference |
+| `container-claude/CLAUDE.md` | Container-side Claude | Environment description and tool inventory |
+
+When changing `.devcontainer/Dockerfile`, `devcontainer.json`,
+`post-create.sh`, or `container-claude/`, review **all three files** and update
+any sections that are affected. In particular:
 
 - **Directory Layout** — if mounts, paths, or read/write permissions change.
 - **Host Tools** — if scripts are added, removed, or renamed.
 - **Security Model** — if hardening flags, mounts, capabilities, user config,
   or network access change.
 - **Workflow** — if the setup or usage steps change.
+- **Installed tools** — if packages are added or removed from the Dockerfile,
+  update the tool list in `container-claude/CLAUDE.md` and the Container
+  Contents section in `README.md`.
 
 ## Toolchain
 

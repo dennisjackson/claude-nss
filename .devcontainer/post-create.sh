@@ -6,24 +6,9 @@ WORKSPACE="/workspaces/project"
 echo "==> Configuring Claude Code..."
 mkdir -p ~/.claude
 
-cat > ~/.claude/settings.json << 'SETTINGS'
-{
-  "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "permissions": {
-    "allow": [
-      "Bash",
-      "Read",
-      "Edit",
-      "Write",
-      "Glob",
-      "Grep",
-      "WebFetch",
-      "WebSearch",
-      "Agent"
-    ]
-  }
-}
-SETTINGS
+# Symlink settings.json and CLAUDE.md from the read-only config mount.
+ln -sf /workspaces/config/container-claude/settings.json ~/.claude/settings.json
+ln -sf /workspaces/config/container-claude/CLAUDE.md /workspaces/CLAUDE.md
 
 CLAUDE_VERSION=$(claude --version 2>/dev/null || echo "0.0.0")
 

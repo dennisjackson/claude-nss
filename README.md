@@ -78,7 +78,7 @@ container output — code, files, instructions — must be reviewed carefully.
 
 - All Linux capabilities dropped except `SYS_PTRACE` (required by ASan).
   Custom seccomp profile; `no-new-privileges` set.
-- `.devcontainer` mounted read-only.
+- `.devcontainer` and `container-claude` mounted read-only.
 - No Docker socket. Non-root user (`vscode`).
 - Only `ANTHROPIC_API_KEY` enters the container.
 
