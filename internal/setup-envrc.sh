@@ -11,57 +11,42 @@ ENVRC="$(dirname "$0")/../.envrc"
 FORCE=false
 [[ "${1:-}" == "-f" ]] && FORCE=true
 
-# Read existing values from .envrc (if it exists) into an associative array.
-declare -A file_vals
+# Read existing ANTHROPIC_API_KEY from .envrc if present.
+existing_value=""
 if [[ -f "$ENVRC" ]]; then
-    while IFS= read -r line; do
-        if [[ "$line" =~ ^export\ ([A-Z_]+)= ]]; then
-            file_vals["${BASH_REMATCH[1]}"]="$line"
-        fi
-    done < "$ENVRC"
+    line=$(grep '^export ANTHROPIC_API_KEY=' "$ENVRC" 2>/dev/null || true)
+    if [[ -n "$line" ]]; then
+        existing_value="${line#export ANTHROPIC_API_KEY=}"
+        existing_value="${existing_value#\"}"
+        existing_value="${existing_value%\"}"
+    fi
 fi
 
-# Resolve current value: .envrc takes precedence, then environment.
-current_value() {
-    local key="$1"
-    if [[ -n "${file_vals[$key]:-}" ]]; then
-        # Extract the value from the export line
-        eval "local v; ${file_vals[$key]}; v=\$$key"
-        printf '%s' "$v"
-    elif [[ -n "${!key:-}" ]]; then
-        printf '%s' "${!key}"
-    fi
-}
-
-KEYS=(ANTHROPIC_API_KEY)
-declare -A new_vals
+# Fall back to environment variable.
+current_value="${existing_value:-${ANTHROPIC_API_KEY:-}}"
 
 echo "Setting up $ENVRC"
 echo "Press Enter to skip any key you don't have yet."
 echo
 
-for key in "${KEYS[@]}"; do
-    cur="$(current_value "$key")"
-    if [[ -n "$cur" ]] && ! $FORCE; then
-        echo "$key: already set (use -f to overwrite)"
-        new_vals["$key"]="$cur"
-    else
-        prompt="$key"
-        [[ -n "$cur" ]] && prompt="$key [current: ${cur:0:4}...]"
-        read -rp "$prompt: " input
-        if [[ -n "$input" ]]; then
-            new_vals["$key"]="$input"
-        elif [[ -n "$cur" ]]; then
-            new_vals["$key"]="$cur"
-        fi
+new_value=""
+if [[ -n "$current_value" ]] && ! $FORCE; then
+    echo "ANTHROPIC_API_KEY: already set (use -f to overwrite)"
+    new_value="$current_value"
+else
+    prompt="ANTHROPIC_API_KEY"
+    [[ -n "$current_value" ]] && prompt="ANTHROPIC_API_KEY [current: ${current_value:0:4}...]"
+    read -rp "$prompt: " input
+    if [[ -n "$input" ]]; then
+        new_value="$input"
+    elif [[ -n "$current_value" ]]; then
+        new_value="$current_value"
     fi
-done
+fi
 
 # Write .envrc — only include keys that have values.
 : > "$ENVRC"
-for key in "${KEYS[@]}"; do
-    [[ -n "${new_vals[$key]:-}" ]] && echo "export $key=\"${new_vals[$key]}\"" >> "$ENVRC"
-done
+[[ -n "$new_value" ]] && echo "export ANTHROPIC_API_KEY=\"$new_value\"" >> "$ENVRC"
 
 echo
 echo "Written to $ENVRC"

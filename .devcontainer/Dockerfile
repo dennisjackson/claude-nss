@@ -73,7 +73,13 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && node --version
 
 # Install git-cinnabar (use Git to work with Mercurial repos)
-RUN curl -sL https://github.com/glandium/git-cinnabar/releases/download/0.7.3/git-cinnabar.linux.x86_64.tar.xz \
+RUN ARCH="$(uname -m)" \
+    && case "$ARCH" in \
+        x86_64)  CINNABAR_ARCH=x86_64 ;; \
+        aarch64) CINNABAR_ARCH=arm64 ;; \
+        *)       echo "Unsupported architecture: $ARCH" >&2; exit 1 ;; \
+    esac \
+    && curl -sL "https://github.com/glandium/git-cinnabar/releases/download/0.7.3/git-cinnabar.linux.${CINNABAR_ARCH}.tar.xz" \
     | tar -xJ --strip-components=1 -C /usr/local/bin/ \
     && git cinnabar --version
 

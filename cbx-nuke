@@ -1,7 +1,14 @@
 #!/bin/bash
 set -euo pipefail
 
-PROJ_DIR="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+# Resolve symlinks to find real script location (portable — no readlink -f)
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+    DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+    SOURCE="$(readlink "$SOURCE")"
+    [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+PROJ_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
 
 # --- Colours & helpers -------------------------------------------------------
 bold=$'\033[1m'
