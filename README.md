@@ -27,7 +27,7 @@ Claude, and optionally a `.claude/commands/` directory with slash commands.
 ### 2. Connect to the container
 
 ```bash
-./connect.sh /path/to/my-project
+cbx-connect /path/to/my-project
 ```
 
 Builds the container on first run, then mounts your project folder and drops
@@ -49,8 +49,8 @@ host.
 
 | Script | Purpose |
 |--------|---------|
-| `connect.sh <project-dir>` | Mount a project folder and connect to the container. |
-| `nuke.sh` | Destroy container and ccache volume. Requires typing "nuke". |
+| `cbx-connect <project-dir>` | Mount a project folder and connect to the container. |
+| `cbx-nuke` | Destroy container and ccache volume. Requires typing "nuke". |
 | `internal/status.sh` | Report container state and environment config. |
 | `internal/fresh-container.sh` | Tear down and rebuild the container. |
 | `internal/setup-envrc.sh` | Set up `.envrc` with API key. |

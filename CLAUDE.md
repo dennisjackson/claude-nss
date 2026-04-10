@@ -11,14 +11,14 @@ on the host and is bind-mounted into the container.
 |---|---|
 | `.devcontainer/` | Dockerfile, devcontainer.json, seccomp profile, post-create script |
 | `container-claude/` | CLAUDE.md and settings.json provisioned into the container (read-only) |
-| `connect.sh`, `nuke.sh` | Top-level host scripts (connect to container, destroy it) |
+| `cbx-connect`, `cbx-nuke` | Top-level host scripts (connect to container, destroy it) |
 | `internal/` | Helper scripts (fresh-container, status, envrc setup) |
 | `.envrc` | Anthropic API key (not tracked in git) |
 
 ## How It Works
 
 The container is generic — it has the toolchain, Claude Code, and a ccache
-volume but no project-specific content. You point `connect.sh` at a **project
+volume but no project-specific content. You point `cbx-connect` at a **project
 folder** on the host and that folder gets bind-mounted read-write into the
 container at `/workspaces/project/`.
 
@@ -28,13 +28,13 @@ the container will pick up the project's CLAUDE.md and commands automatically.
 
 ## Host Tools
 
-- `connect.sh <project-dir>` — mount the given project directory into the dev
+- `cbx-connect <project-dir>` — mount the given project directory into the dev
   container and connect. Creates the container on first use, recreates it when
   switching projects. Auto-runs envrc setup if `.envrc` is missing.
-- `nuke.sh` — destroy the container and ccache volume (requires typing "nuke").
+- `cbx-nuke` — destroy the container and ccache volume (requires typing "nuke").
 - `internal/fresh-container.sh` — tear down and rebuild the dev container.
 - `internal/setup-envrc.sh` — interactively populate `.envrc` with
-  `ANTHROPIC_API_KEY`. Triggered automatically by `connect.sh` when `.envrc` is
+  `ANTHROPIC_API_KEY`. Triggered automatically by `cbx-connect` when `.envrc` is
   missing.
 - `internal/status.sh` — report container state, ccache volume, and
   environment config.
@@ -43,7 +43,7 @@ the container will pick up the project's CLAUDE.md and commands automatically.
 
 1. Set up a project folder on the host with source code, a CLAUDE.md, and
    optionally a `.claude/` commands directory.
-2. Connect: `./connect.sh /path/to/my-project`
+2. Connect: `cbx-connect /path/to/my-project`
 3. Claude Code is pre-installed and pre-configured inside. It sees the project
    folder contents at `/workspaces/project/`.
 4. All changes Claude makes are written directly to the host project folder.
