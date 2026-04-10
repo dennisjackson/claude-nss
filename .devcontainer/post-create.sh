@@ -33,6 +33,11 @@ cat > ~/.claude.json << PREFS
       "allowedTools": [],
       "hasTrustDialogAccepted": true,
       "hasCompletedProjectOnboarding": true
+    },
+    "/workspaces": {
+      "allowedTools": [],
+      "hasTrustDialogAccepted": true,
+      "hasCompletedProjectOnboarding": true
     }
   }
 }
