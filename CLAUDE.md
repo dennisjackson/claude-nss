@@ -1,88 +1,72 @@
-# NSS Dev Container — Host Project
+# Claude Dev Container — Host Project
 
-This repo defines a reproducible, sandboxed dev container for working on
-Mozilla NSS/NSPR with Claude Code. The container gives Claude a full C/C++
-build environment it can explore and modify freely without affecting the host.
+This repo defines a reproducible, sandboxed dev container for running Claude
+Code against arbitrary project folders. The container provides a full C/C++
+build environment that Claude can explore and modify freely. Source code lives
+on the host and is bind-mounted into the container.
 
 ## Directory Layout
 
-| Directory | Purpose | In container? |
-|---|---|---|
-| `.devcontainer/` | Dockerfile, devcontainer.json, post-create script | ro at `/workspaces/config/` |
-| `container-claude/` | CLAUDE.md and `.claude/` skills/commands for use inside the container | rw at `/workspaces/nss-dev/.claude/` |
-| `bugs/` | Bug data and reports (not tracked in git). Each bug has `input/` (fetched from Bugzilla) and `reports/` (tool output) subfolders. | rw at `/workspaces/nss-dev/bugs/` |
-| `.nss-exchange.git/` | Bare git repo for extracting code from the container | rw at `/workspaces/nss-dev/.nss-exchange.git` |
-| `host-nss/` | Host-side NSS checkout with exchange remote for reviewing container output | **no** |
-| `host-tools/` | Scripts that run on the host only (bz-fetch, envrc setup) | **no** |
+| Path | Purpose |
+|---|---|
+| `.devcontainer/` | Dockerfile, devcontainer.json, seccomp profile, post-create script |
+| `host-tools/` | Scripts that run on the host (connect, nuke, status, envrc setup) |
+| `.envrc` | Anthropic API key (not tracked in git) |
+
+## How It Works
+
+The container is generic — it has the toolchain, Claude Code, and a ccache
+volume but no project-specific content. You point `connect.sh` at a **project
+folder** on the host and that folder gets bind-mounted read-write into the
+container at `/workspaces/project/`.
+
+The project folder should contain whatever the task needs: source code,
+CLAUDE.md, `.claude/` commands directory, data files, etc. Claude Code inside
+the container will pick up the project's CLAUDE.md and commands automatically.
 
 ## Host Tools
 
-- `host-tools/bz-fetch.py <bug-id> [...]` — fetch Bugzilla bugs (with comments, attachments, Phabricator diffs) into `bugs/<id>-<slug>/` (e.g., `bugs/1234567-heap-buffer-overread-in-tls/`) as markdown for Claude to read inside the container. Auto-runs envrc setup if `.envrc` is missing.
-- `host-tools/connect.sh` — connect to the dev container. Starts it if stopped, builds it if missing. Auto-runs envrc setup if `.envrc` is missing. Syncs reference repos on every connect.
-- `host-tools/sync-host-nss.sh` — fetch exchange branches into `host-nss/` and list what's available for review. Clones NSS automatically on first run.
-- `host-tools/nuke.sh` — destroy container, volumes, and exchange repo (requires typing "nuke"). Warns about uncommitted changes and unmerged branches in `host-nss/`. Prompts separately for wiping `bugs/` and `host-nss/`.
-- `host-tools/internal/fresh-container.sh` — tear down and rebuild the dev container (called by `connect.sh`).
-- `host-tools/internal/setup-host-nss.sh` — clone NSS into `host-nss/` via git-cinnabar and add the exchange remote (called by `sync-host-nss.sh`).
-- `host-tools/log.sh [--done] BUG_NUM "message"` — append a timestamped entry to a bug's `LOG.md`. With `--done`, also moves the bug folder to `bugs/finished/`.
-- `host-tools/internal/setup-envrc.sh` — interactively populate `.envrc` with API keys (`ANTHROPIC_API_KEY`, `BUGZILLA_API_KEY`, `PHABRICATOR_API_TOKEN`). Triggered automatically by `connect.sh` and `bz-fetch.py` when `.envrc` is missing.
-- `host-tools/internal/setup-reference.sh` — clone or update reference repos (TLS libraries, specs) in `reference/repos/` from `reference/sources.txt`. Called automatically by `connect.sh`. Pass `--force` to re-clone from scratch.
-- `host-tools/internal/status.sh` — report container state, persistent volumes, build artifacts, bind mounts, and environment config.
+- `host-tools/connect.sh <project-dir>` — mount the given project directory
+  into the dev container and connect. Creates the container on first use,
+  recreates it when switching projects. Auto-runs envrc setup if `.envrc` is
+  missing.
+- `host-tools/nuke.sh` — destroy the container and ccache volume (requires
+  typing "nuke").
+- `host-tools/internal/fresh-container.sh` — tear down and rebuild the dev
+  container.
+- `host-tools/internal/setup-envrc.sh` — interactively populate `.envrc` with
+  `ANTHROPIC_API_KEY`. Triggered automatically by `connect.sh` when `.envrc` is
+  missing.
+- `host-tools/internal/status.sh` — report container state, ccache volume, and
+  environment config.
 
 ## Workflow
 
-1. Fetch bug context: `host-tools/bz-fetch.py 1234567` (auto-prompts for API keys on first run).
-2. Open the dev container: `host-tools/connect.sh` (also auto-prompts if `.envrc` is missing).
-3. Claude Code is pre-installed and pre-configured inside.
-4. Claude sees `CLAUDE.md` (via symlink), the `.claude/` commands directory, bug data in `bugs/`, and the full NSS/NSPR source — everything it needs to investigate and work on a bug.
-
-## Extracting Code from the Container
-
-The container's NSS repo has an `exchange` git remote pointing at the shared
-bare repo `.nss-exchange.git/`. This avoids manually copying diffs.
-
-**Inside the container** (Claude pushes a branch):
-```
-cd /workspaces/nss-dev/nss
-git push exchange my-fix-branch
-```
-
-**On the host** (you fetch and review):
-```
-host-tools/sync-host-nss.sh    # fetches exchange branches (clones NSS on first run)
-cd host-nss
-git diff HEAD..exchange/my-fix-branch
-```
-
-The bare repo is a transit point — review branches before merging, just as you
-would review any code from the untrusted container.
+1. Set up a project folder on the host with source code, a CLAUDE.md, and
+   optionally a `.claude/` commands directory.
+2. Connect: `host-tools/connect.sh /path/to/my-project`
+3. Claude Code is pre-installed and pre-configured inside. It sees the project
+   folder contents at `/workspaces/project/`.
+4. All changes Claude makes are written directly to the host project folder.
 
 ## Security Model
 
 The container is an **untrusted environment**. Claude Code runs inside it with
 `CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS=true` and full tool access, so any output
-from the container — files, diffs, instructions, CLAUDE.md content — must be
-treated as potentially compromised.
+from the container — files, diffs, instructions — must be treated as
+potentially compromised.
 
 ### Trust boundary
 
 The container boundary is the trust boundary. Anything written by the container
 could be the product of prompt injection (e.g. from attacker-controlled content
-in NSS source, bug comments, or Phabricator diffs).
+in source code or data files within the project).
 
-**Do not trust `container-claude/` contents.** This directory is bind-mounted
-read-write into the container. Code running inside the container can modify
-`container-claude/CLAUDE.md` and files under `container-claude/commands/`. If
-you run Claude Code on the host in this repo, it will read the host CLAUDE.md
-(this file), but review any changes to `container-claude/` before acting on
-them — they may contain prompt-injection payloads intended to trick host-side
-Claude into executing arbitrary commands.
-
-Similarly, **do not blindly trust files in `bugs/`** — this directory is also
-writable from inside the container.
-
-**Review branches in `.nss-exchange.git/` before merging** — the container
-pushes to this bare repo. Treat pushed branches the same as any other container
-output: inspect the diff before applying to a trusted checkout.
+**The project folder is bind-mounted read-write.** The container can modify
+anything in it, including the project's CLAUDE.md and `.claude/` commands. If
+you run Claude Code on the host, review any changes to project files before
+acting on them — they may contain prompt-injection payloads intended to trick
+host-side Claude into executing arbitrary commands.
 
 ### Container hardening
 
@@ -94,26 +78,21 @@ output: inspect the diff before applying to a trusted checkout.
   (`.devcontainer/seccomp.json`) extends Docker's default allowlist with
   `ptrace` and `personality` (ADDR_NO_RANDOMIZE) for ASan support. All other
   blocked syscalls (kexec_load, bpf, userfaultfd, etc.) remain blocked.
-- **Read-only config mounts** — `.git` and `.devcontainer` are mounted
-  read-only so the container cannot tamper with host repo state or its own
-  build definition.
+- **Read-only config mount** — `.devcontainer` is mounted read-only so the
+  container cannot tamper with its own build definition.
 - **No Docker socket** — the container has no access to the Docker daemon.
 - **Non-root user** — the container runs as `vscode`, not root.
 - **API key exposure** — `ANTHROPIC_API_KEY` is passed into the container via
   environment variable. The container has unrestricted network access, so treat
-  this key as exposed to the container. Do not pass keys the container does not
-  need (Bugzilla/Phabricator tokens stay on the host).
+  this key as exposed to the container.
 
 ### Known residual risks
 
-- The `container-claude/`, `bugs/`, and `.nss-exchange.git/` bind mounts are
-  read-write, giving the container direct write access to those host
-  directories. This is the primary remaining escape vector (via write-back of
-  poisoned files).
+- The project folder bind mount is read-write, giving the container direct
+  write access to the host directory. This is the primary escape vector (via
+  write-back of poisoned files).
 - The container has full outbound network access and could exfiltrate the API
   key or fetch malicious payloads.
-- The `.git` read-only mount exposes commit history, author info, and remote
-  URLs to the container.
 
 ## Maintaining This File
 
@@ -130,11 +109,16 @@ In particular:
 ## Toolchain
 
 The container ships **Clang 18** (from the official LLVM apt repository) and
-defaults to `CC=clang CXX=clang++`. This is required for NSS sanitizer builds
-(`--asan`, `--ubsan`) which use Clang-only flags like `-fsanitize=local-bounds`.
+defaults to `CC="ccache clang" CXX="ccache clang++"`. The ccache directory is
+backed by a named Docker volume (`claude-dev-ccache`) so it persists across
+container rebuilds and project switches.
 
 ## Design Principles
 
-- **Reproducible** — the container is defined entirely by `.devcontainer/`; volumes persist NSS/NSPR source across rebuilds.
-- **Sandboxed** — Claude operates in the container with full permissions but no access to the host filesystem beyond what is explicitly mounted. The sandbox is **not airtight** — see Security Model above.
-- **Host/container separation** — tooling that talks to external APIs (Bugzilla, Phabricator) runs on the host; the container is purely a build/analysis environment.
+- **Reproducible** — the container is defined entirely by `.devcontainer/`.
+- **Generic** — the container knows nothing about the project; all
+  project-specific content (source, CLAUDE.md, commands) comes from the
+  mounted project folder.
+- **Sandboxed** — Claude operates in the container with full permissions but no
+  access to the host filesystem beyond the project folder. The sandbox is **not
+  airtight** — see Security Model above.

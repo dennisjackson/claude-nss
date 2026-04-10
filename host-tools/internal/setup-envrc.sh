@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Set up .envrc with API keys for the NSS dev environment.
+# Set up .envrc with API keys for the dev container.
 # Usage: ./setup-envrc.sh [-f]
 #
 # Prompts for each key interactively. Leave blank to skip.
@@ -33,7 +33,7 @@ current_value() {
     fi
 }
 
-KEYS=(ANTHROPIC_API_KEY BUGZILLA_API_KEY PHABRICATOR_API_TOKEN)
+KEYS=(ANTHROPIC_API_KEY)
 declare -A new_vals
 
 echo "Setting up $ENVRC"

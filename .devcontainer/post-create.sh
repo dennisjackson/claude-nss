@@ -1,8 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-WORKSPACE="/workspaces/nss-dev"
-mkdir -p "${WORKSPACE}"
+WORKSPACE="/workspaces/project"
 
 echo "==> Configuring Claude Code..."
 mkdir -p ~/.claude
@@ -55,7 +54,7 @@ cat > ~/.claude.json << PREFS
 PREFS
 
 echo "==> Configuring git identity from host..."
-IDENTITY_FILE="${WORKSPACE}/bugs/.host-git-identity"
+IDENTITY_FILE="${WORKSPACE}/.host-git-identity"
 if [ -f "${IDENTITY_FILE}" ]; then
     GIT_NAME="$(sed -n '1p' "${IDENTITY_FILE}")"
     GIT_EMAIL="$(sed -n '2p' "${IDENTITY_FILE}")"
@@ -69,32 +68,6 @@ if [ -f "${IDENTITY_FILE}" ]; then
     fi
 else
     echo "    WARNING: ${IDENTITY_FILE} not found — git identity not configured"
-fi
-
-echo "==> Linking CLAUDE.md into workspace..."
-ln -sf .claude/CLAUDE.md "${WORKSPACE}/CLAUDE.md"
-
-echo "==> Syncing NSS and NSPR via git-cinnabar into ${WORKSPACE}..."
-clone_or_pull() {
-    local repo_url="$1" target="$2"
-    if [ -d "${target}/.git" ]; then
-        echo "    ${target} exists, pulling updates..."
-        git -C "${target}" pull --ff-only
-    else
-        echo "    Cloning ${repo_url}..."
-        git clone --depth 1 hg::"${repo_url}" "${target}"
-    fi
-}
-
-clone_or_pull "https://hg.mozilla.org/projects/nspr" "${WORKSPACE}/nspr" &
-clone_or_pull "https://hg.mozilla.org/projects/nss" "${WORKSPACE}/nss" &
-wait
-
-echo "==> Configuring exchange remote for NSS..."
-if [ -d "${WORKSPACE}/.nss-exchange.git" ]; then
-    git -C "${WORKSPACE}/nss" remote remove exchange 2>/dev/null || true
-    git -C "${WORKSPACE}/nss" remote add exchange "${WORKSPACE}/.nss-exchange.git"
-    echo "    Added 'exchange' remote to nss repo"
 fi
 
 echo "==> Done!"

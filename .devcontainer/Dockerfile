@@ -22,7 +22,7 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get autoremove -y && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-# Core build tools + NSS build dependencies
+# Core build tools and common dependencies
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends \
         build-essential \
@@ -33,22 +33,17 @@ RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
         gdb \
         valgrind \
         cppcheck \
-        # NSS-specific dependencies
         python3 \
         python3-distutils \
         pipx \
         zlib1g-dev \
         libsqlite3-dev \
-        # Mercurial (needed by git-cinnabar)
         mercurial \
-        # Useful for NSS test harnesses
         perl \
         psmisc \
         procps \
         lcov \
-        # Generate compile_commands.json for IDE integration with gyp/ninja builds
         bear \
-        # Misc
         ca-certificates \
         curl \
     && apt-get autoremove -y && apt-get clean -y \
@@ -59,15 +54,13 @@ RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install diff-cover
 
 # ccache — dramatically speeds up rebuilds by caching object files.
 # The cache directory is backed by a named volume so it survives container
-# rebuilds. We set CC/CXX to ccache-wrapped clang so the NSS build system
-# picks it up transparently.
+# rebuilds. CC/CXX default to ccache-wrapped clang.
 RUN apt-get update && export DEBIAN_FRONTEND=noninteractive \
     && apt-get -y install --no-install-recommends ccache \
     && apt-get autoremove -y && apt-get clean -y \
     && rm -rf /var/lib/apt/lists/*
 
-ENV CCACHE_DIR=/workspaces/nss-dev/.ccache \
-    CCACHE_BASEDIR=/workspaces/nss-dev \
+ENV CCACHE_DIR=/.ccache \
     CCACHE_MAXSIZE=5G \
     CCACHE_COMPRESS=1 \
     CC="ccache clang" \
@@ -104,7 +97,7 @@ RUN cargo install searchfox-cli \
 # angr — binary analysis framework
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install angr
 
-# tlslite-ng — pure-Python TLS implementation (for NSS interop testing)
+# tlslite-ng — pure-Python TLS implementation (for interop testing)
 RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install tlslite-ng
 
 # Z3 — SMT solver (constraint reasoning over bit-vectors, modular arithmetic)
@@ -128,8 +121,8 @@ RUN PIPX_HOME=/opt/pipx PIPX_BIN_DIR=/usr/local/bin pipx install semgrep
 RUN npm install -g @anthropic-ai/claude-code \
     && claude --version
 
-# Create workspace directory for NSS development
+# Create workspace and ccache directories.
 # Volume mount points must be owned by vscode before volumes are attached,
 # so that Docker preserves ownership when creating empty named volumes.
-RUN mkdir -p /workspaces/nss-dev /workspaces/nss-dev/nspr /workspaces/nss-dev/nss /workspaces/nss-dev/.ccache /workspaces/nss-dev/worktrees \
-    && chown -R vscode:vscode /workspaces/nss-dev
+RUN mkdir -p /workspaces/project /.ccache \
+    && chown -R vscode:vscode /workspaces/project /.ccache

@@ -1,5 +1,5 @@
 {
-  "name": "NSS (Mozilla) C/C++ Development",
+  "name": "Claude Dev Container",
   "build": {
     "dockerfile": "Dockerfile"
   },
@@ -10,7 +10,7 @@
     "--security-opt=seccomp=${localWorkspaceFolder}/.devcontainer/seccomp.json"
   ],
   "workspaceMount": "",
-  "workspaceFolder": "/workspaces/nss-dev",
+  "workspaceFolder": "/workspaces/project",
   "features": {
     "ghcr.io/devcontainers/features/common-utils:2": {},
     "ghcr.io/devcontainers/features/git:1": {}
@@ -31,17 +31,9 @@
     }
   },
   "mounts": [
-    "source=nss-dev-nspr,target=/workspaces/nss-dev/nspr,type=volume",
-    "source=nss-dev-nss,target=/workspaces/nss-dev/nss,type=volume",
-    "source=nss-dev-worktrees,target=/workspaces/nss-dev/worktrees,type=volume",
-    "source=nss-dev-ccache,target=/workspaces/nss-dev/.ccache,type=volume",
-    "source=${localWorkspaceFolder}/.git,target=/workspaces/config/.git,type=bind,readonly",
+    "source=claude-dev-ccache,target=/.ccache,type=volume",
     "source=${localWorkspaceFolder}/.devcontainer,target=/workspaces/config/.devcontainer,type=bind,readonly",
-    "source=${localWorkspaceFolder}/container-claude,target=/workspaces/nss-dev/.claude,type=bind,readonly",
-    "source=${localWorkspaceFolder}/container-claude/commands,target=/workspaces/nss-dev/.claude/commands,type=bind",
-    "source=${localWorkspaceFolder}/bugs,target=/workspaces/nss-dev/bugs,type=bind",
-    "source=${localWorkspaceFolder}/.nss-exchange.git,target=/workspaces/nss-dev/.nss-exchange.git,type=bind",
-    "source=${localWorkspaceFolder}/reference,target=/workspaces/nss-dev/reference,type=bind,readonly"
+    "source=${localEnv:PROJECT_DIR},target=/workspaces/project,type=bind"
   ],
   "containerEnv": {
     "CLAUDE_DANGEROUSLY_SKIP_PERMISSIONS": "true",
@@ -50,7 +42,7 @@
   "remoteEnv": {
     "ANTHROPIC_API_KEY": "${localEnv:ANTHROPIC_API_KEY}"
   },
-  "initializeCommand": "bash -c 'test -f .nss-exchange.git/HEAD || git init --bare .nss-exchange.git; mkdir -p bugs; printf \"%s\\n%s\\n\" \"$(git config user.name 2>/dev/null)\" \"$(git config user.email 2>/dev/null)\" > bugs/.host-git-identity'",
+  "initializeCommand": "bash -c 'printf \"%s\\n%s\\n\" \"$(git config user.name 2>/dev/null)\" \"$(git config user.email 2>/dev/null)\" > \"${PROJECT_DIR}/.host-git-identity\"'",
   "postCreateCommand": "bash /workspaces/config/.devcontainer/post-create.sh",
   "remoteUser": "vscode"
 }

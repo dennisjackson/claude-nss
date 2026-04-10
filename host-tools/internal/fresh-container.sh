@@ -1,4 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-devcontainer up --workspace-folder "$(dirname "$0")/.." --remove-existing-container && \
-devcontainer exec --workspace-folder "$(dirname "$0")/.." bash
+PROJ_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
+devcontainer up --workspace-folder "$PROJ_DIR" --remove-existing-container && \
+devcontainer exec --workspace-folder "$PROJ_DIR" bash
