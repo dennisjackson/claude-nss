@@ -125,4 +125,4 @@ RUN npm install -g @anthropic-ai/claude-code \
 # Volume mount points must be owned by vscode before volumes are attached,
 # so that Docker preserves ownership when creating empty named volumes.
 RUN mkdir -p /workspaces/project /.ccache \
-    && chown -R vscode:vscode /workspaces/project /.ccache
+    && chown -R vscode:vscode /workspaces /.ccache
